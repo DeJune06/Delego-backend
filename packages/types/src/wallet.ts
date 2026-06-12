@@ -1,0 +1,30 @@
+/** Stellar / Soroban wallet primitives */
+
+export type StellarNetwork = "testnet" | "mainnet" | "futurenet";
+
+export interface WalletAccount {
+  address: string;
+  network: StellarNetwork;
+}
+
+export interface TransactionRequest {
+  sourceAddress: string;
+  contractId: string;
+  method: string;
+  args: unknown[];
+  /** Human-readable description for approval UI */
+  memo: string;
+}
+
+export interface TransactionResult {
+  hash: string;
+  ledger: number;
+  success: boolean;
+}
+
+export interface PermissionGrant {
+  contractId: string;
+  spender: string;
+  limit: bigint;
+  expiresAt: string | null;
+}

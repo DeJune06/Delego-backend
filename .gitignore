@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+target/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Soroban
+.soroban/
+*.wasm
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Docker
+docker-data/
+
+# Misc
+*.tsbuildinfo
+.turbo/

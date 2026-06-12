@@ -1,0 +1,12 @@
+{
+  "name": "@delego/tests-unit",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "test": "node --test src/**/*.test.js",
+    "typecheck": "echo 'N/A'"
+  },
+  "dependencies": {
+    "@delego/utils": "workspace:*"
+  }
+}

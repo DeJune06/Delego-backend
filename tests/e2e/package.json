@@ -1,0 +1,9 @@
+{
+  "name": "@delego/tests-e2e",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "test": "echo 'TODO: Playwright or Cypress e2e tests'",
+    "typecheck": "echo 'N/A'"
+  }
+}
