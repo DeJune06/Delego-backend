@@ -8,53 +8,6 @@ importers:
 
   .: {}
 
-  apps/merchant:
-    dependencies:
-      '@delego/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk
-      '@delego/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@delego/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
-      next:
-        specifier: ^15.1.0
-        version: 15.5.19(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      react:
-        specifier: ^19.0.0
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.0.0
-        version: 19.2.7(react@19.2.7)
-    devDependencies:
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.19.21
-      '@types/react':
-        specifier: ^19.0.0
-        version: 19.2.17
-      '@types/react-dom':
-        specifier: ^19.0.0
-        version: 19.2.3(@types/react@19.2.17)
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
-
-  apps/mobile:
-    dependencies:
-      '@delego/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk
-      '@delego/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-    devDependencies:
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
-
   apps/web:
     dependencies:
       '@delego/sdk':
@@ -91,24 +44,7 @@ importers:
 
   contracts/escrow: {}
 
-  contracts/marketplace: {}
-
   contracts/permissions: {}
-
-  contracts/reputation: {}
-
-  packages/config:
-    dependencies:
-      '@delego/types':
-        specifier: workspace:*
-        version: link:../types
-    devDependencies:
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.19.21
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
 
   packages/sdk:
     dependencies:
@@ -156,53 +92,6 @@ importers:
 
   services/agents:
     dependencies:
-      '@delego/config':
-        specifier: workspace:*
-        version: link:../../packages/config
-      '@delego/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@delego/utils':
-        specifier: workspace:*
-        version: link:../../packages/utils
-    devDependencies:
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.19.21
-      tsx:
-        specifier: ^4.19.0
-        version: 4.22.4
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
-
-  services/analytics:
-    dependencies:
-      '@delego/config':
-        specifier: workspace:*
-        version: link:../../packages/config
-      '@delego/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@delego/utils':
-        specifier: workspace:*
-        version: link:../../packages/utils
-    devDependencies:
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.19.21
-      tsx:
-        specifier: ^4.19.0
-        version: 4.22.4
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
-
-  services/catalog:
-    dependencies:
-      '@delego/config':
-        specifier: workspace:*
-        version: link:../../packages/config
       '@delego/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -222,9 +111,6 @@ importers:
 
   services/gateway:
     dependencies:
-      '@delego/config':
-        specifier: workspace:*
-        version: link:../../packages/config
       '@delego/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -244,9 +130,6 @@ importers:
 
   services/notifications:
     dependencies:
-      '@delego/config':
-        specifier: workspace:*
-        version: link:../../packages/config
       '@delego/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -266,9 +149,6 @@ importers:
 
   services/orchestrator:
     dependencies:
-      '@delego/config':
-        specifier: workspace:*
-        version: link:../../packages/config
       '@delego/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -288,9 +168,6 @@ importers:
 
   services/payments:
     dependencies:
-      '@delego/config':
-        specifier: workspace:*
-        version: link:../../packages/config
       '@delego/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -310,9 +187,6 @@ importers:
 
   services/wallet:
     dependencies:
-      '@delego/config':
-        specifier: workspace:*
-        version: link:../../packages/config
       '@delego/types':
         specifier: workspace:*
         version: link:../../packages/types
