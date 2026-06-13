@@ -25,6 +25,10 @@
     "db:seed": "node scripts/setup/seed.js",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
-    "clean": "pnpm -r exec rm -rf dist .next node_modules"
+    "clean": "pnpm -r exec rm -rf dist .next node_modules",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }

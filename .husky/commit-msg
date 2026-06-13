@@ -1,0 +1,5 @@
+if npx --no -- commitlint --version >/dev/null 2>&1; then
+  npx --no -- commitlint --edit ${1}
+else
+  echo "⚠️ commitlint is not installed in the project, skipping commit message validation."
+fi

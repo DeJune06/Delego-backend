@@ -1,0 +1,11 @@
+echo "🔍 Running pre-commit checks..."
+
+# Run lint
+echo "▸ Running linter..."
+pnpm run lint
+if [ $? -ne 0 ]; then
+  echo "❌ Linting failed."
+  exit 1
+fi
+
+echo "✅ Pre-commit checks passed!"

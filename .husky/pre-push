@@ -1,0 +1,27 @@
+echo "🚀 Running pre-push checks..."
+
+# Type check
+echo "▸ Running TypeScript type check..."
+pnpm run typecheck
+if [ $? -ne 0 ]; then
+  echo "❌ Type check failed. Please fix TypeScript errors before pushing."
+  exit 1
+fi
+
+# Linting
+echo "▸ Running ESLint..."
+pnpm run lint
+if [ $? -ne 0 ]; then
+  echo "❌ Linting failed. Please fix linting errors before pushing."
+  exit 1
+fi
+
+# Build
+echo "▸ Building project..."
+pnpm run build
+if [ $? -ne 0 ]; then
+  echo "❌ Build failed. Please fix build errors before pushing."
+  exit 1
+fi
+
+echo "✅ All pre-push checks passed! You can now push your changes."
