@@ -1,20 +1,15 @@
--- Delego initial schema
--- TODO: Add migrations tooling (e.g. node-pg-migrate, Drizzle, Prisma)
+-- Migration: 002_gateway_auth_limits.sql
+-- Description: Add gateway authentication columns and spend limit, delegation policy, and permission level tables.
 
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+-- Up migration
 
--- Users
-CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password_hash VARCHAR(255),
-    stellar_address VARCHAR(56) UNIQUE,
-    display_name VARCHAR(255),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+-- Alter users table
+ALTER TABLE users ALTER COLUMN stellar_address DROP NOT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
+ALTER TABLE users ALTER COLUMN email SET NOT NULL;
+ALTER TABLE users ADD CONSTRAINT users_email_key UNIQUE (email);
 
--- Wallets
+-- Wallets (if not exists)
 CREATE TABLE IF NOT EXISTS wallets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -28,36 +23,6 @@ CREATE TABLE IF NOT EXISTS wallets (
 
 CREATE INDEX IF NOT EXISTS idx_wallets_user_id ON wallets(user_id);
 CREATE INDEX IF NOT EXISTS idx_wallets_stellar_address ON wallets(stellar_address);
-
--- Delegations
-CREATE TABLE IF NOT EXISTS delegations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    agent_id VARCHAR(64) NOT NULL,
-    status VARCHAR(32) NOT NULL DEFAULT 'pending',
-    policy JSONB NOT NULL DEFAULT '{}',
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_delegations_user_id ON delegations(user_id);
-
--- Orders
-CREATE TABLE IF NOT EXISTS orders (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    delegation_id UUID REFERENCES delegations(id) ON DELETE SET NULL,
-    merchant_id VARCHAR(64) NOT NULL,
-    status VARCHAR(32) NOT NULL DEFAULT 'draft',
-    line_items JSONB NOT NULL DEFAULT '[]',
-    total_stroops BIGINT NOT NULL DEFAULT 0,
-    escrow_contract_id VARCHAR(64),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_orders_user_id ON orders(user_id);
-CREATE INDEX idx_orders_status ON orders(status);
 
 -- Spend Limits
 CREATE TABLE IF NOT EXISTS spend_limits (
@@ -92,12 +57,7 @@ CREATE TABLE IF NOT EXISTS delegation_policies (
 CREATE INDEX IF NOT EXISTS idx_delegation_policies_delegation_id ON delegation_policies(delegation_id);
 
 -- Permission Levels
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'permission_type') THEN
-        CREATE TYPE permission_type AS ENUM ('VIEW_ONLY', 'AUTO_APPROVE', 'SIGNER', 'ADMIN');
-    END IF;
-END$$;
+CREATE TYPE permission_type AS ENUM ('VIEW_ONLY', 'AUTO_APPROVE', 'SIGNER', 'ADMIN');
 
 CREATE TABLE IF NOT EXISTS permission_levels (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -112,3 +72,5 @@ CREATE TABLE IF NOT EXISTS permission_levels (
 
 CREATE INDEX IF NOT EXISTS idx_permission_levels_delegation_id ON permission_levels(delegation_id);
 
+-- Down migration
+-- (Would drop the tables and reverse modifications, but not run automatically)
