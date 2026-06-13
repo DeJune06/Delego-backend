@@ -2,8 +2,9 @@
   "name": "@delego/tests-unit",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "scripts": {
-    "test": "node --test src/**/*.test.js",
+    "test": "node --test",
     "typecheck": "echo 'N/A'"
   },
   "dependencies": {
