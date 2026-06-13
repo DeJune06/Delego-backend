@@ -26,5 +26,8 @@
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "clean": "pnpm -r exec rm -rf dist .next node_modules"
+  },
+  "devDependencies": {
+    "pg": "^8.21.0"
   }
 }
