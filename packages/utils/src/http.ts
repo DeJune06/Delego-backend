@@ -19,6 +19,7 @@ export interface HttpServerOptions {
   serviceName: string;
   version?: string;
   routes?: Route[];
+  middleware?: Array<(req: IncomingMessage, res: ServerResponse, next: (err?: any) => void) => void | Promise<void>>;
 }
 
 function matchRoute(
@@ -70,27 +71,14 @@ export function startHttpServer(options: HttpServerOptions): void {
     options;
 
   const server = createServer(async (req, res) => {
-    const url = new URL(req.url ?? "/", `http://${req.headers.host}`);
+    const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
     const pathname = url.pathname;
 
-    if (req.method === "GET" && pathname === "/health") {
-      json(res, 200, {
-        data: {
-          status: "ok",
-          service: serviceName,
-          version,
-          timestamp: new Date().toISOString(),
-        },
-        error: null,
-      });
-      return;
-    }
+    const middlewares = options.middleware ?? [];
+    let index = 0;
 
-    const matched = matchRoute(routes, req.method ?? "GET", pathname);
-    if (matched) {
-      try {
-        await matched.route.handler(req, res, matched.params);
-      } catch (err) {
+    const next = async (err?: any) => {
+      if (err) {
         json(res, 500, {
           data: null,
           error: {
@@ -98,14 +86,54 @@ export function startHttpServer(options: HttpServerOptions): void {
             message: err instanceof Error ? err.message : "Unknown error",
           },
         });
+        return;
       }
-      return;
-    }
 
-    json(res, 404, {
-      data: null,
-      error: { code: "NOT_FOUND", message: `Route not found: ${pathname}` },
-    });
+      if (index < middlewares.length) {
+        const mw = middlewares[index++];
+        try {
+          await mw(req, res, next);
+        } catch (mwErr) {
+          await next(mwErr);
+        }
+      } else {
+        if (req.method === "GET" && pathname === "/health") {
+          json(res, 200, {
+            data: {
+              status: "ok",
+              service: serviceName,
+              version,
+              timestamp: new Date().toISOString(),
+            },
+            error: null,
+          });
+          return;
+        }
+
+        const matched = matchRoute(routes, req.method ?? "GET", pathname);
+        if (matched) {
+          try {
+            await matched.route.handler(req, res, matched.params);
+          } catch (err) {
+            json(res, 500, {
+              data: null,
+              error: {
+                code: "INTERNAL_ERROR",
+                message: err instanceof Error ? err.message : "Unknown error",
+              },
+            });
+          }
+          return;
+        }
+
+        json(res, 404, {
+          data: null,
+          error: { code: "NOT_FOUND", message: `Route not found: ${pathname}` },
+        });
+      }
+    };
+
+    await next();
   });
 
   server.listen(port, host, () => {
@@ -113,3 +141,4 @@ export function startHttpServer(options: HttpServerOptions): void {
     console.log(`[${serviceName}] listening on ${host}:${port}`);
   });
 }
+
