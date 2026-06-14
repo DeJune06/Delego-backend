@@ -255,6 +255,15 @@ importers:
       ioredis:
         specifier: ^5.11.1
         version: 5.11.1
+      pg:
+        specifier: ^8.21.0
+        version: 8.21.0
+      pg-hstore:
+        specifier: ^2.3.4
+        version: 2.3.4
+      sequelize:
+        specifier: ^6.37.8
+        version: 6.37.8(pg-hstore@2.3.4)(pg@8.21.0)
     devDependencies:
       '@types/ioredis-mock':
         specifier: ^8.2.7
@@ -262,6 +271,9 @@ importers:
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.21
+      '@types/validator':
+        specifier: ^13.15.10
+        version: 13.15.10
       ioredis-mock:
         specifier: ^8.13.1
         version: 8.13.1(@types/ioredis-mock@8.2.7(ioredis@5.11.1))(ioredis@5.11.1)

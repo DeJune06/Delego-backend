@@ -14,6 +14,10 @@ export interface TransactionRequest {
   args: unknown[];
   /** Human-readable description for approval UI */
   memo: string;
+  userId?: string;
+  walletId?: string;
+  delegationId?: string | null;
+  amountStroops?: string;
 }
 
 export interface TransactionResult {
