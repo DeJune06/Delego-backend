@@ -2,8 +2,13 @@
   "name": "@delego/tests-integration",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "scripts": {
-    "test": "node src/health-check.test.js",
+    "test": "node --test src/health-check.test.js",
+    "test:payments-escrow": "node --test src/payments-escrow.testnet.test.js",
     "typecheck": "echo 'N/A'"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "^15.1.0"
   }
 }
