@@ -274,7 +274,11 @@ importers:
 
   tests/e2e: {}
 
-  tests/integration: {}
+  tests/integration:
+    dependencies:
+      '@stellar/stellar-sdk':
+        specifier: ^15.1.0
+        version: 15.1.0
 
   tests/unit:
     dependencies:
