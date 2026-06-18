@@ -55,7 +55,7 @@ describe("payments escrow testnet integration", { timeout: 600000 }, () => {
   contractId = process.env.ESCROW_CONTRACT_ID ?? deployed.contractId;
   console.log(`Deployed escrow contract: ${contractId}`);
 
-  const walletDir = path.join(ROOT, "services/wallet");
+  const walletDir = path.join(ROOT, "apps/backend/wallet");
   const previousCwd = process.cwd();
   process.chdir(walletDir);
   const { vaultService } = await import(
@@ -64,7 +64,7 @@ describe("payments escrow testnet integration", { timeout: 600000 }, () => {
   await vaultService.storeKey(adminKeypair.publicKey(), adminKeypair.secret());
   process.chdir(previousCwd);
 
-  walletProc = startService("wallet", "services/wallet", {
+  walletProc = startService("wallet", "apps/backend/wallet", {
     NODE_ENV: "development",
     WALLET_PORT: String(WALLET_PORT),
     STELLAR_NETWORK: "testnet",
@@ -72,7 +72,7 @@ describe("payments escrow testnet integration", { timeout: 600000 }, () => {
   });
   await waitForHealth(`${WALLET_URL}/health`);
 
-  paymentsProc = startService("payments", "services/payments", {
+  paymentsProc = startService("payments", "apps/backend/payments", {
     NODE_ENV: "development",
     PAYMENTS_PORT: String(PAYMENTS_PORT),
     WALLET_URL,

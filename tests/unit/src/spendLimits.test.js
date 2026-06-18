@@ -7,11 +7,11 @@ import {
   getDailyKey,
   getWeeklyKey,
   getLifetimeKey
-} from "../../../services/wallet/dist/src/spendLimits.js";
-import { SpendLimit } from "../../../services/wallet/dist/src/models/SpendLimit.js";
-import { Wallet } from "../../../services/wallet/dist/src/models/Wallet.js";
-import { getRedisConnection } from "../../../services/wallet/dist/src/queue/txQueue.js";
-import { addTransactionToQueue } from "../../../services/wallet/dist/src/queue/txQueue.js";
+} from "../../../apps/backend/wallet/dist/src/spendLimits.js";
+import { SpendLimit } from "../../../apps/backend/wallet/dist/src/models/SpendLimit.js";
+import { Wallet } from "../../../apps/backend/wallet/dist/src/models/Wallet.js";
+import { getRedisConnection } from "../../../apps/backend/wallet/dist/src/queue/txQueue.js";
+import { addTransactionToQueue } from "../../../apps/backend/wallet/dist/src/queue/txQueue.js";
 
 describe("Wallet Spend Limits Middleware", () => {
   let originalSpendLimitFindOne;

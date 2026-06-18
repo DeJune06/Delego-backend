@@ -1,0 +1,25 @@
+{
+  "name": "@delego/agents",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Delego agents service",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo 'TODO: add eslint'",
+    "test": "echo 'No tests yet'"
+  },
+  "dependencies": {
+    "@delego/types": "workspace:*",
+    "@delego/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  }
+}

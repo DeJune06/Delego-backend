@@ -8,8 +8,8 @@ import {
   initQueue, 
   closeQueue, 
   getRedisConnection 
-} from "../../../services/wallet/dist/src/queue/txQueue.js";
-import { vaultService } from "../../../services/wallet/dist/src/vault.js";
+} from "../../../apps/backend/wallet/dist/src/queue/txQueue.js";
+import { vaultService } from "../../../apps/backend/wallet/dist/src/vault.js";
 
 describe("Wallet Transaction Queue & Sequence Sync", () => {
   let originalLoadAccount;

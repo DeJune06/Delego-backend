@@ -1,8 +1,8 @@
 import { describe, it, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { Horizon, Networks, TransactionBuilder, Transaction, Keypair } from "@stellar/stellar-sdk";
-import { registerRoutes } from "../../../services/wallet/dist/src/routes.js";
-import { getRedisConnection } from "../../../services/wallet/dist/src/queue/txQueue.js";
+import { registerRoutes } from "../../../apps/backend/wallet/dist/src/routes.js";
+import { getRedisConnection } from "../../../apps/backend/wallet/dist/src/queue/txQueue.js";
 
 describe("Wallet REST API Routes", () => {
   let originalLoadAccount;

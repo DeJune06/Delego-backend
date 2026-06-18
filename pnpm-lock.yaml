@@ -28,7 +28,181 @@ importers:
         specifier: ^8.21.0
         version: 8.21.0
 
-  apps/web:
+  agents:
+    dependencies:
+      '@delego/types':
+        specifier: workspace:*
+        version: link:../packages/types
+      '@delego/utils':
+        specifier: workspace:*
+        version: link:../packages/utils
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.21
+      tsx:
+        specifier: ^4.19.0
+        version: 4.22.4
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  apps/backend/gateway:
+    dependencies:
+      '@delego/types':
+        specifier: workspace:*
+        version: link:../../../packages/types
+      '@delego/utils':
+        specifier: workspace:*
+        version: link:../../../packages/utils
+      bcryptjs:
+        specifier: ^3.0.3
+        version: 3.0.3
+      ioredis:
+        specifier: ^5.11.1
+        version: 5.11.1
+      jsonwebtoken:
+        specifier: ^9.0.3
+        version: 9.0.3
+      pg:
+        specifier: ^8.21.0
+        version: 8.21.0
+      pg-hstore:
+        specifier: ^2.3.4
+        version: 2.3.4
+      sequelize:
+        specifier: ^6.37.8
+        version: 6.37.8(pg-hstore@2.3.4)(pg@8.21.0)
+    devDependencies:
+      '@types/bcryptjs':
+        specifier: ^3.0.0
+        version: 3.0.0
+      '@types/ioredis-mock':
+        specifier: ^8.2.7
+        version: 8.2.7(ioredis@5.11.1)
+      '@types/jsonwebtoken':
+        specifier: ^9.0.10
+        version: 9.0.10
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.21
+      '@types/validator':
+        specifier: ^13.15.10
+        version: 13.15.10
+      ioredis-mock:
+        specifier: ^8.13.1
+        version: 8.13.1(@types/ioredis-mock@8.2.7(ioredis@5.11.1))(ioredis@5.11.1)
+      tsx:
+        specifier: ^4.19.0
+        version: 4.22.4
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  apps/backend/notifications:
+    dependencies:
+      '@delego/types':
+        specifier: workspace:*
+        version: link:../../../packages/types
+      '@delego/utils':
+        specifier: workspace:*
+        version: link:../../../packages/utils
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.21
+      tsx:
+        specifier: ^4.19.0
+        version: 4.22.4
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  apps/backend/orchestrator:
+    dependencies:
+      '@delego/types':
+        specifier: workspace:*
+        version: link:../../../packages/types
+      '@delego/utils':
+        specifier: workspace:*
+        version: link:../../../packages/utils
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.21
+      tsx:
+        specifier: ^4.19.0
+        version: 4.22.4
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  apps/backend/payments:
+    dependencies:
+      '@delego/types':
+        specifier: workspace:*
+        version: link:../../../packages/types
+      '@delego/utils':
+        specifier: workspace:*
+        version: link:../../../packages/utils
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.21
+      tsx:
+        specifier: ^4.19.0
+        version: 4.22.4
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  apps/backend/wallet:
+    dependencies:
+      '@delego/types':
+        specifier: workspace:*
+        version: link:../../../packages/types
+      '@delego/utils':
+        specifier: workspace:*
+        version: link:../../../packages/utils
+      '@stellar/stellar-sdk':
+        specifier: ^15.1.0
+        version: 15.1.0
+      bullmq:
+        specifier: ^5.78.1
+        version: 5.78.1
+      ioredis:
+        specifier: ^5.11.1
+        version: 5.11.1
+      pg:
+        specifier: ^8.21.0
+        version: 8.21.0
+      pg-hstore:
+        specifier: ^2.3.4
+        version: 2.3.4
+      sequelize:
+        specifier: ^6.37.8
+        version: 6.37.8(pg-hstore@2.3.4)(pg@8.21.0)
+    devDependencies:
+      '@types/ioredis-mock':
+        specifier: ^8.2.7
+        version: 8.2.7(ioredis@5.11.1)
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.21
+      '@types/validator':
+        specifier: ^13.15.10
+        version: 13.15.10
+      ioredis-mock:
+        specifier: ^8.13.1
+        version: 8.13.1(@types/ioredis-mock@8.2.7(ioredis@5.11.1))(ioredis@5.11.1)
+      tsx:
+        specifier: ^4.19.0
+        version: 4.22.4
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  apps/frontend:
     dependencies:
       '@delego/sdk':
         specifier: workspace:*
@@ -106,180 +280,6 @@ importers:
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.21
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
-
-  services/agents:
-    dependencies:
-      '@delego/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@delego/utils':
-        specifier: workspace:*
-        version: link:../../packages/utils
-    devDependencies:
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.19.21
-      tsx:
-        specifier: ^4.19.0
-        version: 4.22.4
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
-
-  services/gateway:
-    dependencies:
-      '@delego/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@delego/utils':
-        specifier: workspace:*
-        version: link:../../packages/utils
-      bcryptjs:
-        specifier: ^3.0.3
-        version: 3.0.3
-      ioredis:
-        specifier: ^5.11.1
-        version: 5.11.1
-      jsonwebtoken:
-        specifier: ^9.0.3
-        version: 9.0.3
-      pg:
-        specifier: ^8.21.0
-        version: 8.21.0
-      pg-hstore:
-        specifier: ^2.3.4
-        version: 2.3.4
-      sequelize:
-        specifier: ^6.37.8
-        version: 6.37.8(pg-hstore@2.3.4)(pg@8.21.0)
-    devDependencies:
-      '@types/bcryptjs':
-        specifier: ^3.0.0
-        version: 3.0.0
-      '@types/ioredis-mock':
-        specifier: ^8.2.7
-        version: 8.2.7(ioredis@5.11.1)
-      '@types/jsonwebtoken':
-        specifier: ^9.0.10
-        version: 9.0.10
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.19.21
-      '@types/validator':
-        specifier: ^13.15.10
-        version: 13.15.10
-      ioredis-mock:
-        specifier: ^8.13.1
-        version: 8.13.1(@types/ioredis-mock@8.2.7(ioredis@5.11.1))(ioredis@5.11.1)
-      tsx:
-        specifier: ^4.19.0
-        version: 4.22.4
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
-
-  services/notifications:
-    dependencies:
-      '@delego/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@delego/utils':
-        specifier: workspace:*
-        version: link:../../packages/utils
-    devDependencies:
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.19.21
-      tsx:
-        specifier: ^4.19.0
-        version: 4.22.4
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
-
-  services/orchestrator:
-    dependencies:
-      '@delego/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@delego/utils':
-        specifier: workspace:*
-        version: link:../../packages/utils
-    devDependencies:
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.19.21
-      tsx:
-        specifier: ^4.19.0
-        version: 4.22.4
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
-
-  services/payments:
-    dependencies:
-      '@delego/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@delego/utils':
-        specifier: workspace:*
-        version: link:../../packages/utils
-    devDependencies:
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.19.21
-      tsx:
-        specifier: ^4.19.0
-        version: 4.22.4
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
-
-  services/wallet:
-    dependencies:
-      '@delego/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@delego/utils':
-        specifier: workspace:*
-        version: link:../../packages/utils
-      '@stellar/stellar-sdk':
-        specifier: ^15.1.0
-        version: 15.1.0
-      bullmq:
-        specifier: ^5.78.1
-        version: 5.78.1
-      ioredis:
-        specifier: ^5.11.1
-        version: 5.11.1
-      pg:
-        specifier: ^8.21.0
-        version: 8.21.0
-      pg-hstore:
-        specifier: ^2.3.4
-        version: 2.3.4
-      sequelize:
-        specifier: ^6.37.8
-        version: 6.37.8(pg-hstore@2.3.4)(pg@8.21.0)
-    devDependencies:
-      '@types/ioredis-mock':
-        specifier: ^8.2.7
-        version: 8.2.7(ioredis@5.11.1)
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.19.21
-      '@types/validator':
-        specifier: ^13.15.10
-        version: 13.15.10
-      ioredis-mock:
-        specifier: ^8.13.1
-        version: 8.13.1(@types/ioredis-mock@8.2.7(ioredis@5.11.1))(ioredis@5.11.1)
-      tsx:
-        specifier: ^4.19.0
-        version: 4.22.4
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -2057,7 +2057,7 @@ snapshots:
   '@types/jsonwebtoken@9.0.10':
     dependencies:
       '@types/ms': 2.1.0
-      '@types/node': 22.19.21
+      '@types/node': 25.9.3
 
   '@types/ms@2.1.0': {}
 
@@ -2841,7 +2841,7 @@ snapshots:
 
   wkx@0.5.0:
     dependencies:
-      '@types/node': 22.19.21
+      '@types/node': 25.9.3
 
   wrap-ansi@9.0.2:
     dependencies:

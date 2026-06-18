@@ -30,13 +30,13 @@ Delego/
 
 ### Key Directories
 
-- **apps/**: Frontend applications (web, mobile)
+- **apps/**: Applications (frontend, backend)
+- **agents/**: AI agent runtime and packages
 - **contracts/**: Soroban smart contracts
 - **database/**: Database schema, migrations, seed data
 - **docs/**: Project documentation
 - **infrastructure/**: Infrastructure as code
 - **packages/**: Shared libraries
-- **services/**: Backend microservices
 - **tests/**: Test suites
 
 ### Recommended Reading Order
@@ -129,15 +129,15 @@ Based on your interests:
 
 #### For Frontend Developers
 
-- **apps/web/**: Customer web application
+- **apps/frontend/**: Customer web application
 - **packages/ui/**: Shared UI components
 - **packages/sdk/**: API client SDK
 
 #### For Backend Developers
 
-- **services/gateway/**: API gateway
-- **services/orchestrator/**: Workflow orchestration
-- **services/wallet/**: Wallet service
+- **apps/backend/gateway/**: API gateway
+- **apps/backend/orchestrator/**: Workflow orchestration
+- **apps/backend/wallet/**: Wallet service
 
 #### For Smart Contract Developers
 
@@ -146,9 +146,7 @@ Based on your interests:
 
 #### For AI/ML Developers
 
-- **services/agents/**: AI agent runtime
-- **services/agents/buyer-agent/**: Buyer agent
-- **services/agents/payment-agent/**: Payment agent
+- **agents/**: AI agent runtime and packages
 
 ## Development Workflow
 
@@ -289,11 +287,11 @@ Before submitting a PR, ensure:
 
 ### Adding a New Service
 
-1. Create service directory in `services/`
+1. Create service directory in `apps/backend/`
 2. Add package.json with service configuration
 3. Implement service with health check endpoint
 4. Add service to docker-compose.yml
-5. Update services/README.md
+5. Update apps/backend/README.md
 6. Add tests for the service
 7. Update CI/CD configuration
 

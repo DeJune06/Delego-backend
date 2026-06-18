@@ -221,7 +221,7 @@ pub fn escrow_funds(env: Env, amount: i128) {
 
 ## 🎯 Project Areas
 
-### Customer Web Application (`apps/web`)
+### Customer Web Application (`apps/frontend`)
 
 **Tech Stack:** Next.js, React, TypeScript, Tailwind CSS
 
@@ -237,7 +237,7 @@ pub fn escrow_funds(env: Env, amount: i128) {
 - `components/` - React components
 - `hooks/` - Custom React hooks
 
-### API Gateway (`services/gateway`)
+### API Gateway (`apps/backend/gateway`)
 
 **Tech Stack:** Node.js, Express/Fastify, TypeScript
 
@@ -253,7 +253,7 @@ pub fn escrow_funds(env: Env, amount: i128) {
 - `middleware/` - Express middleware
 - `auth/` - Authentication logic
 
-### Orchestrator Service (`services/orchestrator`)
+### Orchestrator Service (`apps/backend/orchestrator`)
 
 **Tech Stack:** Node.js, TypeScript, XState
 
@@ -268,7 +268,7 @@ pub fn escrow_funds(env: Env, amount: i128) {
 - `state/` - State machine logic
 - `execution/` - Workflow execution
 
-### Agents Service (`services/agents`)
+### Agents Service (`agents`)
 
 **Tech Stack:** Node.js, TypeScript, LLM APIs
 
@@ -283,7 +283,7 @@ pub fn escrow_funds(env: Env, amount: i128) {
 - `payment-agent/` - Payment agent implementation
 - `runtime/` - Agent runtime abstraction
 
-### Wallet Service (`services/wallet`)
+### Wallet Service (`apps/backend/wallet`)
 
 **Tech Stack:** Node.js, TypeScript, Stellar SDK
 
@@ -298,7 +298,7 @@ pub fn escrow_funds(env: Env, amount: i128) {
 - `soroban/` - Soroban contract interaction
 - `keys/` - Key management
 
-### Payments Service (`services/payments`)
+### Payments Service (`apps/backend/payments`)
 
 **Tech Stack:** Node.js, TypeScript, Soroban SDK
 

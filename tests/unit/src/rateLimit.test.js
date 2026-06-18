@@ -5,9 +5,9 @@ import {
   checkRateLimit,
   getRedisClient,
   disconnectRedis,
-} from "../../../services/gateway/dist/src/rateLimit/index.js";
-import { rateLimitMiddleware } from "../../../services/gateway/dist/middleware/rateLimit.js";
-import { generateToken } from "../../../services/gateway/dist/src/auth/authService.js";
+} from "../../../apps/backend/gateway/dist/src/rateLimit/index.js";
+import { rateLimitMiddleware } from "../../../apps/backend/gateway/dist/middleware/rateLimit.js";
+import { generateToken } from "../../../apps/backend/gateway/dist/src/auth/authService.js";
 
 describe("Gateway Rate Limiting System", () => {
   before(() => {

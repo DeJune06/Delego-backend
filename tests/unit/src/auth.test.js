@@ -7,9 +7,9 @@ import {
   verifyToken,
   registerUser,
   loginUser,
-} from "../../../services/gateway/dist/src/auth/authService.js";
-import { extractAuth } from "../../../services/gateway/dist/middleware/auth.js";
-import { User } from "../../../services/gateway/dist/src/models/User.js";
+} from "../../../apps/backend/gateway/dist/src/auth/authService.js";
+import { extractAuth } from "../../../apps/backend/gateway/dist/middleware/auth.js";
+import { User } from "../../../apps/backend/gateway/dist/src/models/User.js";
 
 describe("Gateway Authentication System", () => {
   describe("Password Hashing (bcrypt)", () => {

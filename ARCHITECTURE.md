@@ -6,8 +6,9 @@ Delego implements a microservices architecture designed for AI-powered delegated
 
 ### Core Components
 
-- **Frontend**: Customer web application (`apps/web`)
-- **Backend Services**: Gateway, orchestrator, agents, wallet, payments, notifications
+- **Frontend**: Customer web application (`apps/frontend`)
+- **Backend Services**: Gateway, orchestrator, wallet, payments, notifications (under `apps/backend/`)
+- **Agents**: AI agent runtime (`agents/`)
 - **Smart Contracts**: Soroban escrow and permissions contracts
 - **Shared Libraries**: UI components, SDK, types, utilities
 
@@ -26,14 +27,14 @@ Delego implements a microservices architecture designed for AI-powered delegated
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         User Layer                              │
-│                    Web App (apps/web)                           │
+│                  Web App (apps/frontend)                        │
 │              React/Next.js + Stellar Wallet                     │
 └────────────────────────────┬────────────────────────────────────┘
                              │
                              v
 ┌─────────────────────────────────────────────────────────────────┐
 │                      API Gateway Layer                          │
-│              (services/gateway - Port 3000)                      │
+│             (apps/backend/gateway - Port 3000)                  │
 │  • Authentication (JWT)                                         │
 │  • Authorization (RBAC + Wallet-based)                          │
 │  • Rate Limiting (Redis)                                        │
@@ -106,7 +107,7 @@ Delego implements a microservices architecture designed for AI-powered delegated
 
 ## Service Boundaries
 
-### Gateway Service (`services/gateway`)
+### Gateway Service (`apps/backend/gateway`)
 
 **Responsibilities:**
 - HTTP API endpoint management
@@ -134,7 +135,7 @@ Delego implements a microservices architecture designed for AI-powered delegated
 - `GET /api/v1/orders` - List orders
 - `POST /api/v1/orders` - Create order
 
-### Orchestrator Service (`services/orchestrator`)
+### Orchestrator Service (`apps/backend/orchestrator`)
 
 **Responsibilities:**
 - Purchase workflow coordination
@@ -164,7 +165,7 @@ Delego implements a microservices architecture designed for AI-powered delegated
 - Event bus (Redis Pub/Sub)
 - PostgreSQL for workflow persistence
 
-### Agents Service (`services/agents`)
+### Agents Service (`agents`)
 
 **Responsibilities:**
 - AI agent runtime execution
@@ -187,7 +188,7 @@ Delego implements a microservices architecture designed for AI-powered delegated
 - Vector database for memory (Planned)
 - Tool execution framework
 
-### Wallet Service (`services/wallet`)
+### Wallet Service (`apps/backend/wallet`)
 
 **Responsibilities:**
 - Stellar account management
@@ -210,7 +211,7 @@ Delego implements a microservices architecture designed for AI-powered delegated
 - Soroban RPC client
 - PostgreSQL for wallet data
 
-### Payments Service (`services/payments`)
+### Payments Service (`apps/backend/payments`)
 
 **Responsibilities:**
 - Escrow contract coordination
@@ -235,7 +236,7 @@ Delego implements a microservices architecture designed for AI-powered delegated
 - Stellar SDK
 - PostgreSQL for payment records
 
-### Notifications Service (`services/notifications`)
+### Notifications Service (`apps/backend/notifications`)
 
 **Responsibilities:**
 - Email notifications

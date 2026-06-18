@@ -32,13 +32,13 @@ Delego follows a microservices architecture with clear separation of concerns:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                         User Layer                          │
-│                    Web App (apps/web)                       │
+│                  Web App (apps/frontend)                    │
 └─────────────────────────┬───────────────────────────────────┘
                           │
                           v
 ┌─────────────────────────────────────────────────────────────┐
 │                      API Gateway                            │
-│              (services/gateway - Port 3000)                  │
+│           (apps/backend/gateway - Port 3000)                │
 │              Auth, Rate Limiting, Routing                    │
 └─────────────────────────┬───────────────────────────────────┘
                           │
@@ -204,15 +204,15 @@ Delego is organized as a monorepo using pnpm workspaces:
 
 ```
 delego/
-├── apps/                    # Frontend applications
-│   └── web/                 # Customer web application (Next.js)
-├── services/                # Backend microservices
-│   ├── gateway/            # API gateway with auth & routing
-│   ├── orchestrator/       # Purchase workflow coordination
-│   ├── agents/             # AI agent runtime
-│   ├── wallet/             # Stellar wallet & Soroban integration
-│   ├── payments/           # Payment & escrow coordination
-│   └── notifications/      # Email & push notifications
+├── apps/                    # Applications
+│   ├── frontend/            # Customer web application (Next.js)
+│   └── backend/             # Backend microservices
+│       ├── gateway/         # API gateway with auth & routing
+│       ├── orchestrator/    # Purchase workflow coordination
+│       ├── wallet/          # Stellar wallet & Soroban integration
+│       ├── payments/        # Payment & escrow coordination
+│       └── notifications/   # Email & push notifications
+├── agents/                  # AI agent runtime and packages
 ├── contracts/              # Soroban smart contracts
 │   ├── escrow/             # Escrow contract for purchase funds
 │   └── permissions/        # Delegated spending permissions

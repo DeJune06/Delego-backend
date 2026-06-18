@@ -2,8 +2,8 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { vaultService } from "../../../services/wallet/dist/src/vault.js";
-import { accountService } from "../../../services/wallet/dist/stellar/account.js";
+import { vaultService } from "../../../apps/backend/wallet/dist/src/vault.js";
+import { accountService } from "../../../apps/backend/wallet/dist/stellar/account.js";
 
 describe("Wallet Service & Vault", () => {
   before(async () => {

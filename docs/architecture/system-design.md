@@ -28,7 +28,7 @@ See [ARCHITECTURE.md](../../ARCHITECTURE.md) for the monorepo overview. This doc
 
 ### Presentation Layer
 
-**Components**: `apps/web`, `apps/merchant`, `apps/mobile`
+**Components**: `apps/frontend`, `apps/merchant`, `apps/mobile`
 
 The presentation layer handles user interaction and UI rendering.
 
@@ -57,7 +57,7 @@ The presentation layer handles user interaction and UI rendering.
 
 ### API Layer
 
-**Components**: `services/gateway`
+**Components**: `apps/backend/gateway`
 
 The API layer provides a unified API entry point for all clients.
 
@@ -86,7 +86,7 @@ The API layer provides a unified API entry point for all clients.
 
 ### Application Layer
 
-**Components**: `services/orchestrator`, `services/agents`
+**Components**: `apps/backend/orchestrator`, `agents`
 
 The application layer contains business logic and workflow orchestration.
 
@@ -115,7 +115,7 @@ The application layer contains business logic and workflow orchestration.
 
 ### Domain Layer
 
-**Components**: `services/wallet`, `services/payments`, `services/catalog`
+**Components**: `apps/backend/wallet`, `apps/backend/payments`, `apps/backend/catalog`
 
 The domain layer contains core business entities and domain logic.
 

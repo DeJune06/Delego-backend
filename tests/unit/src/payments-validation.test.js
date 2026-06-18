@@ -6,7 +6,7 @@ import {
   validateInitializeRequest,
   validateRefundRequest,
   validateReleaseRequest,
-} from "../../../services/payments/dist/src/validation.js";
+} from "../../../apps/backend/payments/dist/src/validation.js";
 
 const VALID_ADDRESS = "GBBO4ZDDZTSM2GKN4JP4EKBPRXKEHUN36XXH2BHR7J4QKKPOJ7C7LDVF";
 const VALID_CONTRACT = "CA7QYNF7SOWQ3JLRS2ZHG7OYBTLZQQLR3WZTAELUIINI7KBZQC3NCJMT";
