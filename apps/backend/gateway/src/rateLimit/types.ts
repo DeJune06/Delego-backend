@@ -1,23 +1,19 @@
-/**
- * Rate limiting type definitions.
- * @see AGENTS.md — Acceptance Criteria → Types
- */
-
-/** Configuration for a single rate limit rule */
-export interface RateLimitConfig {
-  /** Requests allowed per window */
+export interface RateLimitPolicy {
+  windowMs: number;
   maxRequests: number;
-  /** Window size in seconds */
-  windowSeconds: number;
+  keyPrefix: string;
 }
 
-/** Result returned after checking a rate limit */
+export interface RateLimitConfig {
+  windowMs: number;
+  maxRequests: number;
+  redisClient?: any;
+}
+
 export interface RateLimitResult {
   allowed: boolean;
-  /** Total requests allowed in window */
   limit: number;
-  /** Requests remaining in current window */
   remaining: number;
-  /** Seconds until the window resets */
   resetInSeconds: number;
+  identifier: string;
 }
