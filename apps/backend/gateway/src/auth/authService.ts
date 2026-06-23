@@ -3,10 +3,10 @@ import jwt from "jsonwebtoken";
 import { randomUUID } from "node:crypto";
 import { User } from "../models/User.js";
 import { RefreshToken } from "../models/index.js";
-import { Op } from "sequelize";
 
 const JWT_SECRET = process.env.JWT_SECRET ?? "change-me-in-production";
 const ACCESS_TOKEN_EXPIRES_IN = "15m";
+const REFRESH_TOKEN_EXPIRES_IN = "7d";
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
@@ -22,25 +22,40 @@ export interface TokenPair {
   expiresIn: number;
 }
 
+interface RefreshTokenPayload {
+  tokenId: string;
+  familyId: string;
+  userId: string;
+  secret: string;
+}
+
 function generateAccessToken(userId: string): string {
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRES_IN });
 }
 
-async function generateRefreshToken(userId: string, familyId?: string): Promise<{ refreshToken: string; familyId: string }> {
-  const refreshToken = randomUUID();
-  const tokenHash = await bcrypt.hash(refreshToken, 10);
+async function generateRefreshToken(userId: string, familyId?: string): Promise<{ refreshToken: string; familyId: string; tokenId: string }> {
+  const tokenId = randomUUID();
   const family = familyId ?? randomUUID();
-  const expiresIn = 7 * 24 * 60 * 60 * 1000; // 7 days
-  const expiresAt = new Date(Date.now() + expiresIn);
+  const expiresInMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+  const expiresAt = new Date(Date.now() + expiresInMs);
+  const secret = randomUUID();
+  const tokenHash = await bcrypt.hash(secret, 10);
 
   await RefreshToken.create({
+    id: tokenId,
     userId,
     tokenHash,
     familyId: family,
     expiresAt,
   });
 
-  return { refreshToken, familyId: family };
+  const refreshToken = jwt.sign(
+    { tokenId, familyId: family, userId, secret },
+    JWT_SECRET,
+    { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
+  );
+
+  return { refreshToken, familyId: family, tokenId };
 }
 
 export async function generateTokens(userId: string, familyId?: string): Promise<TokenPair> {
@@ -58,6 +73,21 @@ export function verifyToken(token: string): { userId: string } {
   throw new Error("Invalid token structure");
 }
 
+function verifyRefreshToken(token: string): RefreshTokenPayload {
+  const decoded = jwt.verify(token, JWT_SECRET);
+  if (
+    typeof decoded === "object" &&
+    decoded !== null &&
+    "tokenId" in decoded &&
+    "familyId" in decoded &&
+    "userId" in decoded &&
+    "secret" in decoded
+  ) {
+    return decoded as RefreshTokenPayload;
+  }
+  throw new Error("Invalid refresh token structure");
+}
+
 export async function revokeTokenFamily(familyId: string): Promise<void> {
   await RefreshToken.update(
     { revokedAt: new Date() },
@@ -66,38 +96,33 @@ export async function revokeTokenFamily(familyId: string): Promise<void> {
 }
 
 export async function refreshAccessToken(rawRefreshToken: string): Promise<TokenPair> {
-  const allTokens = await RefreshToken.findAll({
-    where: { revokedAt: { [Op.is]: null } },
-  });
+  const decoded = verifyRefreshToken(rawRefreshToken);
 
-  let validToken: RefreshToken | null = null;
-  for (const token of allTokens) {
-    const isValid = await bcrypt.compare(rawRefreshToken, token.tokenHash);
-    if (isValid) {
-      validToken = token;
-      break;
-    }
-  }
-
-  if (!validToken) {
+  const tokenRecord = await RefreshToken.findByPk(decoded.tokenId);
+  if (!tokenRecord) {
     throw new Error("Invalid refresh token");
   }
 
-  if (validToken.expiresAt < new Date()) {
+  const isSecretValid = await bcrypt.compare(decoded.secret, tokenRecord.tokenHash);
+  if (!isSecretValid) {
+    throw new Error("Invalid refresh token");
+  }
+
+  if (tokenRecord.expiresAt < new Date()) {
     throw new Error("Refresh token expired");
   }
 
   // Token reuse detected - revoke entire family
-  if (validToken.revokedAt) {
-    await revokeTokenFamily(validToken.familyId);
+  if (tokenRecord.revokedAt) {
+    await revokeTokenFamily(tokenRecord.familyId);
     throw new Error("Token reuse detected");
   }
 
   // Revoke the used refresh token
-  await validToken.update({ revokedAt: new Date() });
+  await tokenRecord.update({ revokedAt: new Date() });
 
   // Generate new token pair
-  return generateTokens(validToken.userId, validToken.familyId);
+  return generateTokens(tokenRecord.userId, tokenRecord.familyId);
 }
 
 export function generateToken(userId: string): string {

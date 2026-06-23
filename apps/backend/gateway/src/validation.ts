@@ -1,6 +1,8 @@
-import { Ajv } from "ajv";
+import Ajv from "ajv";
+import addFormats from "ajv-formats";
 
-const ajv = new Ajv();
+const ajv = new (Ajv as any)();
+(addFormats as any)(ajv);
 
 export interface ValidationErrorDetail {
   field: string;
@@ -44,7 +46,7 @@ export interface UpdateDelegationPayload {
   };
 }
 
-export const RegisterSchema = {
+export const RegisterSchema: any = {
   type: "object",
   properties: {
     email: { type: "string", format: "email" },
@@ -55,7 +57,7 @@ export const RegisterSchema = {
   additionalProperties: false
 };
 
-export const LoginSchema = {
+export const LoginSchema: any = {
   type: "object",
   properties: {
     email: { type: "string", format: "email" },
@@ -65,7 +67,7 @@ export const LoginSchema = {
   additionalProperties: false
 };
 
-export const CreateDelegationSchema = {
+export const CreateDelegationSchema: any = {
   type: "object",
   properties: {
     agentId: { type: "string", format: "uuid" },
@@ -74,11 +76,11 @@ export const CreateDelegationSchema = {
     policy: {
       type: "object",
       properties: {
-        maxPerTransaction: { type: "string" },
-        maxTotal: { type: "string" },
+        maxPerTransaction: { type: "string", pattern: "^[0-9]+$" },
+        maxTotal: { type: "string", pattern: "^[0-9]+$" },
         allowedMerchants: { type: "array", items: { type: "string" } },
         allowedCategories: { type: "array", items: { type: "string" } },
-        expiresAt: { type: "string" }
+        expiresAt: { type: "string", format: "date-time" }
       },
       required: ["maxPerTransaction", "maxTotal", "allowedMerchants", "allowedCategories"],
       additionalProperties: false
@@ -89,18 +91,18 @@ export const CreateDelegationSchema = {
   additionalProperties: false
 };
 
-export const UpdateDelegationSchema = {
+export const UpdateDelegationSchema: any = {
   type: "object",
   properties: {
     status: { type: "string", enum: ["pending", "active", "paused", "revoked", "expired"] },
     policy: {
       type: "object",
       properties: {
-        maxPerTransaction: { type: "string" },
-        maxTotal: { type: "string" },
+        maxPerTransaction: { type: "string", pattern: "^[0-9]+$" },
+        maxTotal: { type: "string", pattern: "^[0-9]+$" },
         allowedMerchants: { type: "array", items: { type: "string" } },
         allowedCategories: { type: "array", items: { type: "string" } },
-        expiresAt: { type: "string" }
+        expiresAt: { type: "string", format: "date-time" }
       },
       additionalProperties: false
     }

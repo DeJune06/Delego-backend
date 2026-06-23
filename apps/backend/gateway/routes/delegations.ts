@@ -3,26 +3,8 @@ import { json } from "@delego/utils";
 import { extractAuth } from "../middleware/auth.js";
 import { validateSchema, CreateDelegationSchema, UpdateDelegationSchema } from "../src/validation.js";
 import { sequelize } from "../src/db.js";
-import { Delegation, DelegationPolicy, SpendLimit, PermissionLevel } from "../src/models/index.js";
-
-async function readJsonBody(req: IncomingMessage): Promise<any> {
-  return new Promise((resolve, reject) => {
-    let body = "";
-    req.on("data", (chunk) => {
-      body += chunk;
-    });
-    req.on("end", () => {
-      try {
-        resolve(body ? JSON.parse(body) : {});
-      } catch (err) {
-        reject(new Error("Invalid JSON body"));
-      }
-    });
-    req.on("error", (err) => {
-      reject(err);
-    });
-  });
-}
+import { Delegation, DelegationPolicy, SpendLimit, PermissionLevel, Wallet } from "../src/models/index.js";
+import { readJsonBody, InvalidJsonError, BodyTooLargeError } from "../src/request.js";
 
 function formatDelegationResponse(delegation: Delegation, policy: DelegationPolicy, spendLimit: SpendLimit, permissionLevel: PermissionLevel): any {
   return {
@@ -61,6 +43,19 @@ export async function createDelegationHandler(req: IncomingMessage, res: ServerR
       json(res, 400, {
         data: null,
         error: { code: "VALIDATION_ERROR", message: "Invalid request body", details: validation.errors },
+      });
+      return;
+    }
+
+    // Check wallet ownership
+    const wallet = await Wallet.findOne({
+      where: { id: body.walletId, userId: auth.userId },
+    });
+
+    if (!wallet) {
+      json(res, 404, {
+        data: null,
+        error: { code: "NOT_FOUND", message: "Wallet not found" },
       });
       return;
     }
@@ -123,10 +118,17 @@ export async function createDelegationHandler(req: IncomingMessage, res: ServerR
 
     json(res, 201, { data: response, error: null });
   } catch (err: any) {
-    json(res, 500, {
-      data: null,
-      error: { code: "INTERNAL_ERROR", message: err.message },
-    });
+    if (err instanceof InvalidJsonError || err instanceof BodyTooLargeError) {
+      json(res, 400, {
+        data: null,
+        error: { code: "VALIDATION_ERROR", message: err.message },
+      });
+    } else {
+      json(res, 500, {
+        data: null,
+        error: { code: "INTERNAL_ERROR", message: err.message },
+      });
+    }
   }
 }
 
@@ -301,7 +303,12 @@ export async function updateDelegationHandler(req: IncomingMessage, res: ServerR
 
     json(res, 200, { data: response, error: null });
   } catch (err: any) {
-    if (err.message === "Delegation not found") {
+    if (err instanceof InvalidJsonError || err instanceof BodyTooLargeError) {
+      json(res, 400, {
+        data: null,
+        error: { code: "VALIDATION_ERROR", message: err.message },
+      });
+    } else if (err.message === "Delegation not found") {
       json(res, 404, {
         data: null,
         error: { code: "NOT_FOUND", message: err.message },
