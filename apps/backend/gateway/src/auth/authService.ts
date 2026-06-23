@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { randomUUID } from "node:crypto";
 import { User } from "../models/User.js";
 import { RefreshToken } from "../models/index.js";
+import { Op } from "sequelize";
 
 const JWT_SECRET = process.env.JWT_SECRET ?? "change-me-in-production";
 const ACCESS_TOKEN_EXPIRES_IN = "15m";
@@ -118,8 +119,16 @@ export async function refreshAccessToken(rawRefreshToken: string): Promise<Token
     throw new Error("Token reuse detected");
   }
 
-  // Revoke the used refresh token
-  await tokenRecord.update({ revokedAt: new Date() });
+  // Revoke the used refresh token atomically
+  const [affectedCount] = await RefreshToken.update(
+    { revokedAt: new Date() },
+    { where: { id: decoded.tokenId, revokedAt: { [Op.is]: null } } }
+  );
+
+  if (affectedCount === 0) {
+    await revokeTokenFamily(tokenRecord.familyId);
+    throw new Error("Token reuse detected");
+  }
 
   // Generate new token pair
   return generateTokens(tokenRecord.userId, tokenRecord.familyId);

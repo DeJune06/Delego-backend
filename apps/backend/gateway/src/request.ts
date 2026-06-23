@@ -18,18 +18,23 @@ export class BodyTooLargeError extends Error {
 
 export async function readJsonBody(req: IncomingMessage): Promise<any> {
   return new Promise((resolve, reject) => {
-    let body = "";
+    const chunks: Buffer[] = [];
+    let totalBytes = 0;
 
-    req.on("data", (chunk) => {
-      body += chunk;
-      if (body.length > MAX_BODY_SIZE) {
+    req.on("data", (chunk: Buffer) => {
+      chunks.push(chunk);
+      totalBytes += chunk.length;
+
+      if (totalBytes > MAX_BODY_SIZE) {
         req.destroy();
         reject(new BodyTooLargeError());
+        return;
       }
     });
 
     req.on("end", () => {
       try {
+        const body = Buffer.concat(chunks).toString("utf8");
         resolve(body ? JSON.parse(body) : {});
       } catch (err) {
         reject(new InvalidJsonError());
