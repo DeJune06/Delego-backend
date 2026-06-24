@@ -36,11 +36,9 @@ export function rateLimitMiddleware(config?: RateLimitConfig) {
 
       const result = await checkRateLimit(identifier, endpoint, config);
 
-      const resetTimestamp = Math.floor(Date.now() / 1000) + result.resetInSeconds;
-
       res.setHeader("RateLimit-Limit", result.limit);
       res.setHeader("RateLimit-Remaining", result.remaining);
-      res.setHeader("RateLimit-Reset", resetTimestamp);
+      res.setHeader("RateLimit-Reset", result.resetInSeconds);
 
       if (!result.allowed) {
         res.setHeader("Retry-After", result.resetInSeconds);

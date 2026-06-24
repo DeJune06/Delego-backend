@@ -22,15 +22,24 @@ export async function checkRateLimit(
   const { maxRequests, windowMs } = config;
   const key = buildKey(identifier, endpoint, windowMs);
 
-  const redis = getRedisClient();
+  const redis = config.redisClient ?? getRedisClient();
 
   const pipeline = redis.multi();
   pipeline.incr(key);
-  pipeline.expire(key, Math.ceil(windowMs / 1000));
-
   const results = await pipeline.exec();
 
-  const count = (results?.[0]?.[1] as number) ?? 1;
+  let count = 1;
+  if (results?.[0]) {
+    const [err, val] = results[0] as [Error | null, number];
+    count = err ? 1 : (val as number);
+  }
+
+  // Set TTL only on the first increment in this window —
+  // removes the need for NX flag which isn't supported by ioredis-mock
+  if (count === 1) {
+    await redis.expire(key, Math.ceil(windowMs / 1000));
+  }
+
   const allowed = count <= maxRequests;
   const remaining = Math.max(0, maxRequests - count);
 
