@@ -5,8 +5,10 @@ import {
   checkRateLimit,
   getRedisClient,
   disconnectRedis,
+  getRedisHealth,
 } from "../../../apps/backend/gateway/dist/src/rateLimit/index.js";
 import { rateLimitMiddleware } from "../../../apps/backend/gateway/dist/middleware/rateLimit.js";
+import { healthHandler } from "../../../apps/backend/gateway/dist/routes/health.js";
 import { generateToken } from "../../../apps/backend/gateway/dist/src/auth/authService.js";
 
 describe("Gateway Rate Limiting System", () => {
@@ -41,6 +43,55 @@ describe("Gateway Rate Limiting System", () => {
       const config = getRateLimitConfig("POST", "/api/v1/unknown");
       assert.equal(config.maxRequests, 60);
       assert.equal(config.windowSeconds, 60);
+    });
+  });
+
+  describe("Redis health", () => {
+    it("should report ok for a connected Redis client", async () => {
+      const result = await getRedisHealth({
+        ping: async () => "PONG",
+      });
+
+      assert.equal(result.status, "ok");
+      assert.equal(typeof result.pingMs, "number");
+      assert.equal(result.error, undefined);
+    });
+
+    it("should report degraded for an unavailable Redis client", async () => {
+      const result = await getRedisHealth({
+        ping: async () => {
+          throw new Error("connection refused");
+        },
+      });
+
+      assert.deepEqual(result, {
+        status: "degraded",
+        error: "connection refused",
+      });
+    });
+
+    it("should include Redis rate limiter status in the gateway health response", async () => {
+      const req = {};
+      let statusCode = 200;
+      let bodyStr = "";
+      const res = {
+        writeHead(status) {
+          statusCode = status;
+        },
+        end(data) {
+          bodyStr = data;
+        },
+      };
+
+      await healthHandler(req, res, {});
+
+      const body = JSON.parse(bodyStr);
+      assert.equal(statusCode, 200);
+      assert.equal(body.error, null);
+      assert.equal(body.data.service, "gateway");
+      assert.equal(body.data.status, "ok");
+      assert.equal(body.data.rateLimiter.redis.status, "ok");
+      assert.equal(typeof body.data.rateLimiter.redis.pingMs, "number");
     });
   });
 
