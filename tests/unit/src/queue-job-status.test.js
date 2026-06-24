@@ -2,17 +2,14 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import {
   getJobStatus,
-  getRedisConnection,
 } from "../../../apps/backend/wallet/dist/src/queue/txQueue.js";
 
 describe("getJobStatus", () => {
   before(() => {
-    process.env.MOCK_REDIS = "true";
     process.env.NODE_ENV = "test";
   });
 
   after(() => {
-    delete process.env.MOCK_REDIS;
     delete process.env.NODE_ENV;
   });
 

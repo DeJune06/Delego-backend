@@ -521,14 +521,17 @@ export async function getJobStatus(jobId: string): Promise<TransactionJobStatus 
   const state = await job.getState();
   let status: TransactionJobStatus["status"];
 
-  if (state === "waiting" || state === "delayed") {
+  if (state === "waiting" || state === "delayed" || state === "waiting-children") {
     status = "queued";
   } else if (state === "active") {
     status = "processing";
   } else if (state === "completed") {
     status = "submitted";
-  } else {
+  } else if (state === "failed") {
     status = "failed";
+  } else {
+    // unknown or any future BullMQ state — treat as queued rather than failed
+    status = "queued";
   }
 
   const result: TransactionJobStatus = { jobId, status };
