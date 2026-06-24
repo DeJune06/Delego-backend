@@ -75,6 +75,7 @@ jobs:
   conflict-check:
     name: Conflict Check
     runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     permissions:
       pull-requests: write
     steps:
