@@ -1,25 +1,61 @@
-import type { Order } from "@delego/types";
+/**
+ * Purchase workflow — delegates to PurchaseWorkflowMachine (issue #7).
+ *
+ * The machine persists every transition via the `onTransition` hook.
+ * Callers can restore a crashed workflow with PurchaseWorkflowMachine.fromSnapshot().
+ */
+
+import { PurchaseWorkflowMachine } from "../../state/index.js";
+import type {
+  WorkflowSnapshot,
+  TransitionHook,
+} from "../../state/index.js";
+import { generateId } from "@delego/utils";
 
 export interface PurchaseWorkflowInput {
   delegationId: string;
-  productId: string;
-  quantity: number;
+  userId: string;
+  /** Override the auto-generated workflow ID (e.g. for replay). */
+  workflowId?: string;
 }
 
-export interface PurchaseWorkflowState {
-  step: "init" | "catalog" | "approval" | "escrow" | "complete";
-  orderId: string | null;
+export interface PurchaseWorkflowHandle {
+  machine: PurchaseWorkflowMachine;
+  snapshot: WorkflowSnapshot;
 }
 
 /**
- * Purchase workflow orchestration.
- * TODO: Implement state machine with persistence (PostgreSQL + Redis)
+ * Creates a new purchase workflow machine wired to the provided persistence hook.
+ *
+ * The `onTransition` hook is called after every valid state transition.
+ * Pass a database writer here to durably log transitions and enable crash recovery.
  */
-export async function purchaseWorkflow(
-  _input: PurchaseWorkflowInput
-): Promise<{ state: PurchaseWorkflowState; order: Order | null }> {
-  return {
-    state: { step: "init", orderId: null },
-    order: null,
-  };
+export function purchaseWorkflow(
+  input: PurchaseWorkflowInput,
+  onTransition?: TransitionHook
+): PurchaseWorkflowHandle {
+  const workflowId = input.workflowId ?? generateId();
+
+  const machine = new PurchaseWorkflowMachine(
+    {
+      workflowId,
+      delegationId: input.delegationId,
+      userId: input.userId,
+    },
+    onTransition
+  );
+
+  return { machine, snapshot: machine.getSnapshot() };
+}
+
+/**
+ * Restores a purchase workflow from a persisted snapshot.
+ * Use this after a service restart to resume in-progress workflows.
+ */
+export function restorePurchaseWorkflow(
+  snapshot: WorkflowSnapshot,
+  onTransition?: TransitionHook
+): PurchaseWorkflowHandle {
+  const machine = PurchaseWorkflowMachine.fromSnapshot(snapshot, onTransition);
+  return { machine, snapshot: machine.getSnapshot() };
 }
