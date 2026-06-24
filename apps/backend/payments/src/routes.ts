@@ -114,7 +114,7 @@ export function registerRoutes(): Route[] {
 
     route("POST", "/escrow/:escrowId/release", async (req, res, params) => {
       try {
-        const idempotency = validateIdempotencyKey(req.headers as Record<string, string | string[] | undefined>, "/escrow/release");
+        const idempotency = validateIdempotencyKey(req.headers as Record<string, string | string[] | undefined>, "/escrow/:escrowId/release");
         if (!idempotency.ok) {
           sendValidationError(res, idempotency.error);
           return;
@@ -143,7 +143,7 @@ export function registerRoutes(): Route[] {
 
     route("POST", "/escrow/:escrowId/refund", async (req, res, params) => {
       try {
-        const idempotency = validateIdempotencyKey(req.headers as Record<string, string | string[] | undefined>, "/escrow/refund");
+        const idempotency = validateIdempotencyKey(req.headers as Record<string, string | string[] | undefined>, "/escrow/:escrowId/refund");
         if (!idempotency.ok) {
           sendValidationError(res, idempotency.error);
           return;

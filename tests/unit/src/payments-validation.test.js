@@ -100,14 +100,30 @@ describe("validateIdempotencyKey", () => {
     assert.equal(result.error.code, "MISSING_IDEMPOTENCY_KEY");
   });
 
-  it("rejects key shorter than minimum length", () => {
+  it("rejects key shorter than minimum length (5 chars)", () => {
     const result = validateIdempotencyKey({ "idempotency-key": "short" }, "/escrow/deposit");
     assert.equal(result.ok, false);
     assert.equal(result.error.code, "VALIDATION_ERROR");
     assert.match(result.error.message, /at least/);
   });
 
-  it("rejects key longer than maximum length", () => {
+  it("rejects key of exactly 7 characters (one below minimum)", () => {
+    const result = validateIdempotencyKey({ "idempotency-key": "a".repeat(7) }, "/escrow/deposit");
+    assert.equal(result.ok, false);
+    assert.equal(result.error.code, "VALIDATION_ERROR");
+  });
+
+  it("accepts key of exactly 8 characters (minimum boundary)", () => {
+    const result = validateIdempotencyKey({ "idempotency-key": "a".repeat(8) }, "/escrow/deposit");
+    assert.equal(result.ok, true);
+  });
+
+  it("accepts key of exactly 128 characters (maximum boundary)", () => {
+    const result = validateIdempotencyKey({ "idempotency-key": "a".repeat(128) }, "/escrow/deposit");
+    assert.equal(result.ok, true);
+  });
+
+  it("rejects key longer than maximum length (129 chars)", () => {
     const longKey = "a".repeat(129);
     const result = validateIdempotencyKey({ "idempotency-key": longKey }, "/escrow/deposit");
     assert.equal(result.ok, false);
