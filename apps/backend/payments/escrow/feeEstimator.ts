@@ -105,7 +105,7 @@ function isValidFeeStats(stats: unknown): stats is HorizonFeeStats {
  *
  * @param horizonUrl - The Horizon server URL to query
  * @param percentile - Fee percentile to use: "p50" (medium), "p95" (high), or "p99" (very high). Defaults to "p95" for reliability.
- * @returns FeeEstimate with dynamic fees from Horizon or fallback values
+ * @returns Promise<FeeEstimate> with dynamic fees from Horizon or fallback values
  *
  * @example
  * // Get recommended fee for normal network conditions (p95)
