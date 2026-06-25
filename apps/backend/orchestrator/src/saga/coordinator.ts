@@ -1,5 +1,5 @@
 import { createLogger, type Logger } from "@delego/utils";
-import type { SagaRecord, SagaStep, SagaStore } from "./types.js";
+import { SagaConcurrencyError, type SagaRecord, type SagaStep, type SagaStore } from "./types.js";
 
 export interface SagaCoordinatorOptions<TContext> {
   /** Saga steps in the order they should execute. Compensations run in reverse order. */
@@ -48,9 +48,15 @@ export class SagaCoordinator<TContext extends Record<string, unknown>> {
       context: initialContext,
       currentStep: this.stepOrder[0] ?? null,
       error: null,
+      version: 0,
       createdAt: now,
       updatedAt: now,
     });
+    // createIfNotExists() can return a previously completed/failed record — treat both as
+    // terminal so a retried run() never restarts a saga that already finished.
+    if (record.status === "completed" || record.status === "failed") {
+      return record as SagaRecord<TContext>;
+    }
     return this.advance(record as SagaRecord<TContext>);
   }
 
@@ -90,70 +96,104 @@ export class SagaCoordinator<TContext extends Record<string, unknown>> {
       return this.compensate(record, new Error(record.error ?? "Saga failed"));
     }
 
-    const remaining = this.stepOrder.filter((name) => !record.completedSteps.includes(name));
+    let current = record;
+    const remaining = this.stepOrder.filter((name) => !current.completedSteps.includes(name));
 
     for (const stepName of remaining) {
       const step = this.steps.get(stepName);
       if (!step) {
         throw new Error(`Unknown saga step: ${stepName}`);
       }
-      record.currentStep = stepName;
+
+      const claimed = await this.claimStep(current, stepName);
+      if (!claimed) return current;
+      current = claimed;
+
       try {
-        record.context = await step.action(record.context);
-        record.completedSteps = [...record.completedSteps, stepName];
-        record.updatedAt = new Date();
-        await this.store.save(record);
+        const context = await step.action(current.context);
+        current = await this.save({
+          ...current,
+          context,
+          completedSteps: [...current.completedSteps, stepName],
+          updatedAt: new Date(),
+        });
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         this.log.error("Saga step failed, starting compensation", {
-          sagaId: record.sagaId,
+          sagaId: current.sagaId,
           step: stepName,
           error: error.message,
         });
-        record.status = "compensating";
-        record.error = error.message;
-        record.updatedAt = new Date();
-        await this.store.save(record);
-        return this.compensate(record, error);
+        current = await this.save({
+          ...current,
+          status: "compensating",
+          error: error.message,
+          updatedAt: new Date(),
+        });
+        return this.compensate(current, error);
       }
     }
 
-    record.status = "completed";
-    record.currentStep = null;
-    record.updatedAt = new Date();
-    await this.store.save(record);
-    return record;
+    return this.save({ ...current, status: "completed", currentStep: null, updatedAt: new Date() });
   }
 
   private async compensate(record: SagaRecord<TContext>, error: Error): Promise<SagaRecord<TContext>> {
-    const toCompensate = [...record.completedSteps].reverse();
+    let current = record;
+    const toCompensate = [...current.completedSteps].reverse();
 
     for (const stepName of toCompensate) {
       const step = this.steps.get(stepName);
       if (!step) continue;
-      record.currentStep = stepName;
+
+      const claimed = await this.claimStep(current, stepName);
+      if (!claimed) return current;
+      current = claimed;
+
       try {
-        record.context = await step.compensation(record.context, error);
-        record.completedSteps = record.completedSteps.filter((name) => name !== stepName);
-        record.updatedAt = new Date();
-        await this.store.save(record);
+        const context = await step.compensation(current.context, error);
+        current = await this.save({
+          ...current,
+          context,
+          completedSteps: current.completedSteps.filter((name) => name !== stepName),
+          updatedAt: new Date(),
+        });
       } catch (compErr) {
         const compensationError = compErr instanceof Error ? compErr : new Error(String(compErr));
         this.log.error("Compensation step failed — saga left in compensating state for retry", {
-          sagaId: record.sagaId,
+          sagaId: current.sagaId,
           step: stepName,
           error: compensationError.message,
         });
-        record.updatedAt = new Date();
-        await this.store.save(record);
         throw compensationError;
       }
     }
 
-    record.status = "failed";
-    record.currentStep = null;
-    record.updatedAt = new Date();
-    await this.store.save(record);
-    return record;
+    return this.save({ ...current, status: "failed", currentStep: null, updatedAt: new Date() });
+  }
+
+  /**
+   * Durably claims a step before its action/compensation runs, so the persisted record always
+   * reflects in-progress work before any side effect fires. If another runner (e.g. startup
+   * recovery racing a manual resume()) already claimed this saga, the version check in
+   * store.save() fails and we back off instead of re-running the step.
+   */
+  private async claimStep(record: SagaRecord<TContext>, stepName: string): Promise<SagaRecord<TContext> | null> {
+    try {
+      return await this.save({ ...record, currentStep: stepName, updatedAt: new Date() });
+    } catch (err) {
+      if (err instanceof SagaConcurrencyError) {
+        this.log.warn("Saga step already claimed by another runner, backing off", {
+          sagaId: record.sagaId,
+          step: stepName,
+        });
+        return null;
+      }
+      throw err;
+    }
+  }
+
+  /** Saves a record of this coordinator's TContext — store.save() is typed generically. */
+  private save(record: SagaRecord<TContext>): Promise<SagaRecord<TContext>> {
+    return this.store.save(record) as Promise<SagaRecord<TContext>>;
   }
 }

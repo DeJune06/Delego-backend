@@ -20,8 +20,18 @@ export interface SagaRecord<TContext = Record<string, unknown>> extends SagaExec
   context: TContext;
   currentStep: string | null;
   error: string | null;
+  /** Optimistic-concurrency counter — bumped on every save() so two runners can never both win a step claim. */
+  version: number;
   createdAt: Date;
   updatedAt: Date;
+}
+
+/** Thrown by SagaStore.save() when `record.version` no longer matches the persisted version. */
+export class SagaConcurrencyError extends Error {
+  constructor(sagaId: string) {
+    super(`Saga ${sagaId} was modified by another runner — aborting to avoid duplicate step execution`);
+    this.name = "SagaConcurrencyError";
+  }
 }
 
 /**
@@ -33,7 +43,12 @@ export interface SagaStore {
   /** Inserts a new saga record. Returns the existing record if sagaId already exists (idempotent start). */
   createIfNotExists(record: SagaRecord): Promise<SagaRecord>;
   get(sagaId: string): Promise<SagaRecord | null>;
-  save(record: SagaRecord): Promise<void>;
+  /**
+   * Persists record and returns the stored copy with `version` incremented. Throws
+   * SagaConcurrencyError if `record.version` doesn't match the persisted version, which is how
+   * callers detect that another runner already claimed this step.
+   */
+  save(record: SagaRecord): Promise<SagaRecord>;
   /** Sagas left in "running" or "compensating" — used to resume after an orchestrator crash. */
   listIncomplete(): Promise<SagaRecord[]>;
 }

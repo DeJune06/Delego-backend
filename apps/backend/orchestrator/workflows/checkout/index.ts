@@ -33,6 +33,8 @@ interface EscrowOperationResult {
   escrowId?: string;
 }
 
+const PAYMENTS_REQUEST_TIMEOUT_MS = Number(process.env.PAYMENTS_REQUEST_TIMEOUT_MS ?? 10_000);
+
 async function callPaymentsService<T>(path: string, body: Record<string, unknown>): Promise<T> {
   const url = `${getPaymentsUrl()}${path}`;
   let response: Response;
@@ -41,6 +43,7 @@ async function callPaymentsService<T>(path: string, body: Record<string, unknown
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(PAYMENTS_REQUEST_TIMEOUT_MS),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to reach payments service";
@@ -72,7 +75,12 @@ const depositEscrowStep: SagaStep<CheckoutContext> = {
       orderId: context.orderId,
     });
     log.info("Escrow deposit confirmed", { orderId: context.orderId, txHash: result.txHash });
-    return { ...context, escrowId: result.escrowId ?? context.orderId };
+    if (!result.escrowId) {
+      // Compensation refunds /escrow/${context.escrowId}/refund — falling back to orderId here
+      // would point a refund at the wrong resource and leave the real escrow uncompensated.
+      throw new Error("Payments service did not return an escrowId for the deposit");
+    }
+    return { ...context, escrowId: result.escrowId };
   },
   async compensation(context, error) {
     if (!context.escrowId) return context;
