@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { deriveDispatchKey, checkAndMarkDispatched } from "./idempotency.js";
 import type { NotificationDispatchKey } from "./idempotency.js";
+import type { Redis } from "ioredis";
 
 const key: NotificationDispatchKey = {
   userId: "user-1",
@@ -26,20 +27,20 @@ describe("deriveDispatchKey", () => {
 
 describe("checkAndMarkDispatched", () => {
   it("returns true on first dispatch attempt", async () => {
-    const redis = { set: vi.fn().mockResolvedValue("OK") } as never;
+    const redis = { set: vi.fn().mockResolvedValue("OK") } as unknown as Redis;
     const result = await checkAndMarkDispatched(redis, key);
     expect(result).toBe(true);
     expect(redis.set).toHaveBeenCalledWith(
       "dispatch:idempotency:user-1:email:transaction_approval:evt-abc",
       "1",
-      "NX",
       "EX",
-      86400
+      86400,
+      "NX"
     );
   });
 
   it("returns false on repeated dispatch attempt (duplicate)", async () => {
-    const redis = { set: vi.fn().mockResolvedValue(null) } as never;
+    const redis = { set: vi.fn().mockResolvedValue(null) } as unknown as Redis;
     const result = await checkAndMarkDispatched(redis, key);
     expect(result).toBe(false);
   });

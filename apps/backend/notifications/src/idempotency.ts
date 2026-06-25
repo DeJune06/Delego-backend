@@ -24,12 +24,6 @@ export async function checkAndMarkDispatched(
   key: NotificationDispatchKey
 ): Promise<boolean> {
   const redisKey = deriveDispatchKey(key);
-  const result = await redis.set(
-    redisKey,
-    "1",
-    "NX",
-    "EX",
-    IDEMPOTENCY_TTL_SECONDS
-  );
+  const result = await redis.set(redisKey, "1", "EX", IDEMPOTENCY_TTL_SECONDS, "NX");
   return result === "OK";
 }
