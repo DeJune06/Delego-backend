@@ -5,8 +5,8 @@ import {
   checkRateLimit,
   getRedisClient,
   disconnectRedis,
-  getRedisHealth,
 } from "../../../apps/backend/gateway/dist/src/rateLimit/index.js";
+import { getRedisHealth } from "../../../apps/backend/gateway/dist/src/rateLimit/redisClient.js";
 import { rateLimitMiddleware } from "../../../apps/backend/gateway/dist/middleware/rateLimit.js";
 import { healthHandler } from "../../../apps/backend/gateway/dist/routes/health.js";
 import { generateToken } from "../../../apps/backend/gateway/dist/src/auth/authService.js";
