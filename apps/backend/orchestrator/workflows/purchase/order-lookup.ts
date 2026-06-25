@@ -29,7 +29,7 @@ export class OrderPaymentNotFoundError extends Error {
 
 /** Stub adapter — replace with a configured HTTP client in production. */
 export const defaultOrderLookupAdapter: OrderLookupAdapter = {
-  async lookup(orderId) {
+  async lookup(_orderId) {
     return null;
   },
 };
