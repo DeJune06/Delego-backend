@@ -99,6 +99,13 @@ export class SagaCoordinator<TContext extends Record<string, unknown>> {
     try {
       const result = await this.resume(sagaId);
       this.scheduleRetryIfLeased(result);
+      // resume() backs off with the pre-claim record on a lost SagaConcurrencyError race, which
+      // may not carry the winner's claimExpiresAt — re-read the store so the retry is scheduled
+      // against the lease that's actually live, not a stale snapshot that looks lease-free.
+      if ((result.status === "running" || result.status === "compensating") && !result.claimExpiresAt) {
+        const latest = await this.store.get(sagaId);
+        if (latest) this.scheduleRetryIfLeased(latest as SagaRecord<TContext>);
+      }
     } catch (err) {
       this.log.error("Saga recovery failed", {
         sagaId,
@@ -144,7 +151,7 @@ export class SagaCoordinator<TContext extends Record<string, unknown>> {
 
       let context: TContext;
       try {
-        context = await this.runWithLeaseTimeout(step.action(current.context), stepName);
+        context = await step.action(current.context);
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         this.log.error("Saga step failed, starting compensation", {
@@ -196,7 +203,7 @@ export class SagaCoordinator<TContext extends Record<string, unknown>> {
 
       let context: TContext;
       try {
-        context = await this.runWithLeaseTimeout(step.compensation(current.context, error), stepName);
+        context = await step.compensation(current.context, error);
       } catch (compErr) {
         const compensationError = compErr instanceof Error ? compErr : new Error(String(compErr));
         this.log.error("Compensation step failed — saga left in compensating state for retry", {
@@ -259,23 +266,5 @@ export class SagaCoordinator<TContext extends Record<string, unknown>> {
   /** Saves a record of this coordinator's TContext — store.save() is typed generically. */
   private save(record: SagaRecord<TContext>): Promise<SagaRecord<TContext>> {
     return this.store.save(record) as Promise<SagaRecord<TContext>>;
-  }
-
-  /**
-   * Backstop so a step can never legitimately outlive its own lease — without this, a step
-   * slower than claimLeaseMs would let a second runner reclaim and re-execute it while the first
-   * is still in flight. Steps should already bound their own work well under claimLeaseMs (e.g.
-   * the checkout workflow's payments timeout is a third of the default lease); this only catches
-   * the case where they don't.
-   */
-  private runWithLeaseTimeout<T>(promise: Promise<T>, stepName: string): Promise<T> {
-    const budgetMs = Math.max(this.claimLeaseMs - 1000, 1000);
-    let timer: ReturnType<typeof setTimeout>;
-    const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(() => {
-        reject(new Error(`Step "${stepName}" exceeded its claim lease (${this.claimLeaseMs}ms)`));
-      }, budgetMs);
-    });
-    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
   }
 }
