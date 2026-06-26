@@ -5,8 +5,8 @@ import {
   publishWorkflowEvent,
   clearPublishedWorkflowEvents,
   publishedWorkflowEvents,
-} from "../../src/workflow-events.js";
-import { CheckoutWorkflow, clearEmittedEvents } from "./index.js";
+} from "../src/workflow-events.js";
+import { CheckoutWorkflow, clearEmittedEvents } from "./checkout/index.js";
 
 describe("workflow event correlation id", () => {
   beforeEach(() => {
