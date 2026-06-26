@@ -216,6 +216,14 @@ export function registerRoutes(): Route[] {
 
         const address = params.address;
 
+        if (!isValidStellarPublicKey(address)) {
+          json(res, 400, {
+            data: null,
+            error: { code: "BAD_REQUEST", message: "Invalid Stellar address format" },
+          });
+          return;
+        }
+
         const network = (process.env.STELLAR_NETWORK ?? "testnet").toLowerCase() as "testnet" | "mainnet";
         const horizonUrl = network === "mainnet"
           ? (process.env.STELLAR_HORIZON_URL ?? "https://horizon.stellar.org")
