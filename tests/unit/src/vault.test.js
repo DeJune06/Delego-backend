@@ -8,18 +8,18 @@ describe("Key Vault Encryption for Hot Wallet BIP-39 Seed Phrases", () => {
 
   it("should encrypt and the output should differ from input", () => {
     const encrypted = encryptSeedPhrase(seedPhrase, masterKey);
-    assert.ok(encrypted.cipherText);
+    assert.ok(encrypted.ciphertext);
     assert.ok(encrypted.iv);
-    assert.ok(encrypted.tag);
-    assert.notEqual(encrypted.cipherText, seedPhrase);
+    assert.ok(encrypted.authTag);
+    assert.notEqual(encrypted.ciphertext, seedPhrase);
   });
 
   it("should decrypt with matching keys and recover original plain text", () => {
     const encrypted = encryptSeedPhrase(seedPhrase, masterKey);
     const decrypted = decryptSeedPhrase(
-      encrypted.cipherText,
+      encrypted.ciphertext,
       encrypted.iv,
-      encrypted.tag,
+      encrypted.authTag,
       masterKey
     );
     assert.equal(decrypted, seedPhrase);
@@ -29,15 +29,15 @@ describe("Key Vault Encryption for Hot Wallet BIP-39 Seed Phrases", () => {
     const encrypted = encryptSeedPhrase(seedPhrase, masterKey);
     const wrongKey = "wrong-master-key-789012";
     assert.throws(() => {
-      decryptSeedPhrase(encrypted.cipherText, encrypted.iv, encrypted.tag, wrongKey);
+      decryptSeedPhrase(encrypted.ciphertext, encrypted.iv, encrypted.authTag, wrongKey);
     });
   });
 
   it("should fail decryption if tag is invalid", () => {
     const encrypted = encryptSeedPhrase(seedPhrase, masterKey);
-    const corruptedTag = encrypted.tag.substring(0, encrypted.tag.length - 2) + "00";
+    const corruptedTag = encrypted.authTag.substring(0, encrypted.authTag.length - 2) + "00";
     assert.throws(() => {
-      decryptSeedPhrase(encrypted.cipherText, encrypted.iv, corruptedTag, masterKey);
+      decryptSeedPhrase(encrypted.ciphertext, encrypted.iv, corruptedTag, masterKey);
     });
   });
 
@@ -45,7 +45,7 @@ describe("Key Vault Encryption for Hot Wallet BIP-39 Seed Phrases", () => {
     const encrypted = encryptSeedPhrase(seedPhrase, masterKey);
     const corruptedIv = encrypted.iv.substring(0, encrypted.iv.length - 2) + "00";
     assert.throws(() => {
-      decryptSeedPhrase(encrypted.cipherText, corruptedIv, encrypted.tag, masterKey);
+      decryptSeedPhrase(encrypted.ciphertext, corruptedIv, encrypted.authTag, masterKey);
     });
   });
 });

@@ -130,7 +130,7 @@ export interface EncryptedSeedPhrase {
 export function encryptSeedPhrase(
   plainText: string,
   masterKey: string
-): { cipherText: string; iv: string; tag: string } {
+): EncryptedSeedPhrase {
   if (!plainText) {
     throw new Error("Plaintext cannot be empty");
   }
@@ -147,25 +147,27 @@ export function encryptSeedPhrase(
   const tag = cipher.getAuthTag().toString("hex");
 
   return {
-    cipherText: encrypted,
+    ciphertext: encrypted,
     iv: iv.toString("hex"),
-    tag: tag,
+    authTag: tag,
+    keyVersion: "v1",
+    algorithm: "aes-256-gcm",
   };
 }
 
 export function decryptSeedPhrase(
-  cipherText: string,
+  ciphertext: string,
   iv: string,
-  tag: string,
+  authTag: string,
   masterKey: string
 ): string {
-  if (!cipherText) {
+  if (!ciphertext) {
     throw new Error("Ciphertext cannot be empty");
   }
   if (!iv) {
     throw new Error("IV cannot be empty");
   }
-  if (!tag) {
+  if (!authTag) {
     throw new Error("Tag cannot be empty");
   }
   if (!masterKey) {
@@ -175,7 +177,7 @@ export function decryptSeedPhrase(
   try {
     const key = crypto.createHash("sha256").update(masterKey).digest();
     const ivBuffer = Buffer.from(iv, "hex");
-    const tagBuffer = Buffer.from(tag, "hex");
+    const tagBuffer = Buffer.from(authTag, "hex");
 
     if (ivBuffer.length !== 12) {
       throw new Error("Invalid IV length for AES-256-GCM (expected 12 bytes)");
@@ -187,7 +189,7 @@ export function decryptSeedPhrase(
     const decipher = crypto.createDecipheriv("aes-256-gcm", key, ivBuffer);
     decipher.setAuthTag(tagBuffer);
 
-    let decrypted = decipher.update(cipherText, "hex", "utf8");
+    let decrypted = decipher.update(ciphertext, "hex", "utf8");
     decrypted += decipher.final("utf8");
 
     return decrypted;
