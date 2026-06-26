@@ -2,7 +2,7 @@
  * @delego/orchestrator — Workflow coordination
  */
 import { createLogger, json, route, startHttpServer } from "@delego/utils";
-import { purchaseWorkflow } from "../workflows/purchase/index.js";
+import { restorePurchaseWorkflow } from "../workflows/purchase/index.js";
 import {
   checkoutWorkflow,
   createCheckoutSagaCoordinator,
@@ -174,5 +174,7 @@ main().catch((err) => {
   process.exitCode = 1;
 });
 
-// Export workflows for internal use
-export { purchaseWorkflow, checkoutWorkflow };
+// Export workflows and state machine for internal use (issue #7)
+export { checkoutWorkflow, restorePurchaseWorkflow };
+export { PurchaseWorkflowMachine } from "../state/index.js";
+export type { WorkflowSnapshot, PurchaseState, PurchaseEvent } from "../state/index.js";
