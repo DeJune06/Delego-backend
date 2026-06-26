@@ -10,7 +10,7 @@ import type {
   WorkflowSnapshot,
   TransitionHook,
 } from "../../state/index.js";
-import { generateId } from "@delego/utils";
+import { randomUUID } from "node:crypto";
 
 export interface PurchaseWorkflowInput {
   delegationId: string;
