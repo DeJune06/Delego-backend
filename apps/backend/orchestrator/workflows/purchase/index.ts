@@ -101,6 +101,30 @@ export async function validateDeliveryProof(
 }
 
 /**
+ * Creates a new purchase workflow machine wired to the provided persistence hook.
+ *
+ * The `onTransition` hook is called after every valid state transition.
+ * Pass a database writer here to durably log transitions and enable crash recovery.
+ */
+export function purchaseWorkflow(
+  input: PurchaseWorkflowInput,
+  onTransition?: TransitionHook
+): PurchaseWorkflowHandle {
+  const workflowId = input.workflowId ?? generateId();
+
+  const machine = new PurchaseWorkflowMachine(
+    {
+      workflowId,
+      delegationId: input.delegationId,
+      userId: input.userId,
+    },
+    onTransition
+  );
+
+  return { machine, snapshot: machine.getSnapshot() };
+}
+
+/**
  * Restores a purchase workflow from a persisted snapshot.
  * Use this after a service restart to resume in-progress workflows.
  */
@@ -112,21 +136,3 @@ export function restorePurchaseWorkflow(
   return { machine, snapshot: machine.getSnapshot() };
 }
 
-/**
- * Start a new purchase workflow.
- * Returns a handle with the machine and its initial snapshot.
- */
-export function purchaseWorkflow(
-  input: PurchaseWorkflowInput,
-  onTransition?: TransitionHook
-): PurchaseWorkflowHandle {
-  const machine = new PurchaseWorkflowMachine(
-    {
-      workflowId: input.workflowId ?? randomUUID(),
-      delegationId: input.delegationId,
-      userId: input.userId,
-    },
-    onTransition
-  );
-  return { machine, snapshot: machine.getSnapshot() };
-}
