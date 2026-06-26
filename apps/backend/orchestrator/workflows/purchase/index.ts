@@ -109,7 +109,7 @@ export function purchaseWorkflow(
   input: PurchaseWorkflowInput,
   onTransition?: TransitionHook
 ): PurchaseWorkflowHandle {
-  const workflowId = input.workflowId ?? generateId();
+  const workflowId = input.workflowId ?? randomUUID();
 
   const machine = new PurchaseWorkflowMachine(
     {
