@@ -1,8 +1,6 @@
 import { createLogger } from "@delego/utils";
 import { escrowService } from "../escrow/index.js";
-import { emitPaymentEvent } from "../events/index.js";
-import { getEscrowContractId } from "../escrow/config.js";
-import { submitContractCall } from "../escrow/wallet-client.js";
+import { publishPaymentEvent, emitPaymentEvent } from "../events/index.js";
 
 const log = createLogger("payments:settlement", process.env.LOG_LEVEL ?? "info");
 
@@ -50,16 +48,16 @@ export async function coordinateSettlement(orderId: string): Promise<void> {
       txHash: result.txHash,
     });
 
-    emitPaymentEvent({
+    await publishPaymentEvent({
       type: "settlement_complete",
       orderId,
-      timestamp: new Date().toISOString(),
       payload: {
         escrowId,
         releaseTo,
         amountStroops,
         txHash: result.txHash,
       },
+      occurredAt: new Date().toISOString(),
     });
 
     log.info("Settlement coordination completed successfully", { orderId, txHash: result.txHash });
@@ -96,6 +94,6 @@ async function resolveReleaseAddress(orderId: string): Promise<string> {
   return releaseTo;
 }
 
-async function resolveSettlementAmount(orderId: string): Promise<string> {
+async function resolveSettlementAmount(_orderId: string): Promise<string> {
   return "0";
 }
