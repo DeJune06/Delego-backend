@@ -10,6 +10,7 @@
  * place.
  */
 
+import { createRequire } from "node:module";
 import { createLogger } from "@delego/utils";
 
 const log = createLogger("payments:events", process.env.LOG_LEVEL ?? "info");
@@ -54,7 +55,7 @@ export interface PaymentEvent<T = unknown> {
 const STREAM_KEY = "payments:events";
 
 // ---------------------------------------------------------------------------
-// Internal: lazy Redis client factory (avoids hard dependency on ioredis)
+// Internal: lazy Redis client factory
 // ---------------------------------------------------------------------------
 
 type RedisLike = {
@@ -67,7 +68,7 @@ type RedisLike = {
 
 let _redis: RedisLike | null = null;
 
-/** Shared in-process stub used in test mode. */
+/** Lightweight in-process stub used in test / mock mode. */
 function makeInMemoryRedis(): RedisLike {
   const store: Array<{ id: string; fields: Record<string, string> }> = [];
   return {
@@ -93,11 +94,12 @@ function getRedisClient(): RedisLike {
     log.info("Using in-memory Redis stub for payment events");
     _redis = makeInMemoryRedis();
   } else {
-    // Dynamically import ioredis at runtime so the module can be loaded in
-    // environments that don't have ioredis installed (tests, contract checks).
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const ioredis = require("ioredis");
-    _redis = new ioredis.Redis(
+    // Use createRequire so this ESM module can load CommonJS ioredis safely.
+    // ioredis ships a CJS build; a bare `import` from NodeNext ESM would need
+    // an explicit `.js` interop shim.  createRequire is the standard solution.
+    const _require = createRequire(import.meta.url);
+    const { Redis } = _require("ioredis") as typeof import("ioredis");
+    _redis = new Redis(
       process.env.REDIS_URL ?? "redis://localhost:6379"
     ) as unknown as RedisLike;
   }
@@ -158,7 +160,8 @@ export async function publishPaymentEvent<T = unknown>(
 
 /**
  * @deprecated Use `publishPaymentEvent` directly.  This shim exists to keep
- * existing call sites (settlement/index.ts etc.) compiling without changes.
+ * existing call sites compiling without changes.  It is fire-and-forget and
+ * never throws.
  */
 export function emitPaymentEvent(event: {
   type: PaymentEventType;
@@ -166,8 +169,6 @@ export function emitPaymentEvent(event: {
   timestamp: string;
   payload: Record<string, unknown>;
 }): void {
-  // Fire-and-forget; log errors but never throw from the legacy shim so we
-  // don't break existing callers that didn't handle the promise.
   publishPaymentEvent<Record<string, unknown>>({
     type: event.type,
     orderId: event.orderId,

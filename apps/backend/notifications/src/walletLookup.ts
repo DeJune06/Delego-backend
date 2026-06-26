@@ -15,6 +15,7 @@
  *    PostgreSQL instance exposed via env-var).
  */
 
+import { createRequire } from "node:module";
 import { createLogger } from "@delego/utils";
 
 const log = createLogger(
@@ -159,10 +160,12 @@ let _defaultAdapter: WalletLookupAdapter | null = null;
 export function getWalletLookupAdapter(): WalletLookupAdapter {
   if (_defaultAdapter) return _defaultAdapter;
 
-  // Inline the minimal pg + ioredis wiring so the notifications service
-  // doesn't need to depend on the gateway's Sequelize setup.
-  const { Pool } = require("pg") as typeof import("pg");
-  const { Redis } = require("ioredis") as typeof import("ioredis");
+  // Use createRequire so this ESM module can safely load the CJS builds of
+  // pg and ioredis without needing a static import at the top of the file
+  // (which would force a real DB/Redis connection on every module load).
+  const _require = createRequire(import.meta.url);
+  const { Pool } = _require("pg") as typeof import("pg");
+  const { Redis } = _require("ioredis") as typeof import("ioredis");
 
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   const redis = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379");
