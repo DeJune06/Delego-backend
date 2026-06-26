@@ -5,6 +5,7 @@
  * Callers can restore a crashed workflow with PurchaseWorkflowMachine.fromSnapshot().
  */
 
+import { randomUUID } from "node:crypto";
 import { PurchaseWorkflowMachine } from "../../state/index.js";
 import type {
   WorkflowSnapshot,
