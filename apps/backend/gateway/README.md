@@ -7,7 +7,6 @@ Delego **gateway** service.
 ```bash
 pnpm --filter @delego/gateway dev
 ```
-
 Health check: `GET http://localhost:3000/health`
 
 ## JWT Validation
@@ -39,3 +38,43 @@ export interface JwtValidationConfig {
 (invalid/non-numeric values fall back to the default; values above the hard
 ceiling are clamped) and `verifyToken()` applies the tolerance to every
 verification.
+
+## Health Check
+
+Health check endpoint: `GET http://localhost:3000/health`
+
+### Response Format
+
+```json
+{
+  "data": {
+    "status": "ok" | "degraded",
+    "service": "gateway",
+    "version": "0.0.1",
+    "timestamp": "2026-06-24T12:00:00.000Z",
+    "dependencies": [
+      {
+        "name": "postgresql",
+        "status": "ok" | "degraded",
+        "latencyMs": 15
+      }
+    ]
+  },
+  "error": null
+}
+```
+
+### Dependency Checks
+
+- **PostgreSQL**: Performs a lightweight `SELECT 1` query with a 5-second timeout
+  - Status: `ok` when database responds successfully
+  - Status: `degraded` when database is unavailable or times out
+  - `latencyMs`: Query response time in milliseconds (0 when degraded)
+
+### Overall Status
+
+- `ok`: All dependencies are healthy
+- `degraded`: One or more dependencies are unhealthy
+
+The endpoint always returns HTTP 200, even when degraded, to distinguish between endpoint unavailability and service degradation.
+ main
