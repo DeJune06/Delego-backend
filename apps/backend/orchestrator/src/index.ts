@@ -176,5 +176,8 @@ main().catch((err) => {
 
 // Export workflows and state machine for internal use (issue #7)
 export { checkoutWorkflow, restorePurchaseWorkflow };
+export { purchaseWorkflow } from "../workflows/purchase/index.js";
+export { publishWorkflowEvent, createWorkflowCorrelationId } from "./workflow-events.js";
+export type { WorkflowEventEnvelope } from "./workflow-events.js";
 export { PurchaseWorkflowMachine } from "../state/index.js";
 export type { WorkflowSnapshot, PurchaseState, PurchaseEvent } from "../state/index.js";
