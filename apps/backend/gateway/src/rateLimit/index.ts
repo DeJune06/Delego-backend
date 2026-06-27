@@ -3,9 +3,8 @@
  * Routes external requests to internal services.
  */
 import { createLogger, startHttpServer } from "@delego/utils";
-import { registerRoutes } from "../routes/index.js";
-import { rateLimitMiddleware } from "../middleware/rateLimit.js";
-
+import { registerRoutes } from "../../routes/index.js";
+import { rateLimitMiddleware } from "../../middleware/rateLimit.js";
 const SERVICE_NAME = "gateway";
 const DEFAULT_PORT = 3000;
 
