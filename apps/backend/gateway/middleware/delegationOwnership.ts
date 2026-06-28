@@ -29,8 +29,6 @@ export function getDelegationOwnershipContext(req: IncomingMessage): DelegationO
  * 
  * The ownership check result is attached to the request context via getDelegationOwnershipContext().
  * 
- * @param delegationIdParam - The name of the route parameter containing the delegation ID (default: "id")
- * 
  * @example
  * ```ts
  * import { verifyDelegationOwnership } from "../middleware/delegationOwnership.js";
@@ -39,7 +37,7 @@ export function getDelegationOwnershipContext(req: IncomingMessage): DelegationO
  * router.delete("/delegations/:id", verifyDelegationOwnership(), revokeDelegationHandler);
  * ```
  */
-export function verifyDelegationOwnership(delegationIdParam: string = "id") {
+export function verifyDelegationOwnership() {
   return async (req: IncomingMessage, res: ServerResponse, next: (err?: any) => void): Promise<void> => {
     const auth = extractAuth(req);
     if (!auth.userId) {
