@@ -1,19 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import {
-  estimateTransactionFee,
-  clearFeeCache,
-  getCachedFeeEstimate,
-} from "./feeEstimator.js";
-import { Horizon } from "@stellar/stellar-sdk";
 
-// Mock Horizon
-vi.mock("@stellar/stellar-sdk", () => ({
-  Horizon: {
-    Server: vi.fn(),
-  },
-}));
-
-// Mock the logger
+// Mock the logger first
 vi.mock("@delego/utils", () => ({
   createLogger: () => ({
     debug: vi.fn(),
@@ -23,8 +10,15 @@ vi.mock("@delego/utils", () => ({
   }),
 }));
 
+// Import the functions and types
+import {
+  estimateTransactionFeeWithServer,
+  clearFeeCache,
+  getCachedFeeEstimate,
+} from "./feeEstimator.js";
+
 describe("feeEstimator", () => {
-  let mockFeeStats: Record<string, unknown>;
+  let mockFeeStats: any;
   let mockHorizonServer: any;
 
   beforeEach(() => {
@@ -45,6 +39,7 @@ describe("feeEstimator", () => {
         p70: 500,
         p80: 600,
         p90: 700,
+        p95: 800,
         p99: 1000,
       },
       max_fee: {
@@ -57,6 +52,7 @@ describe("feeEstimator", () => {
         p70: 800,
         p80: 900,
         p90: 1100,
+        p95: 1100,
         p99: 2000,
       },
     };
@@ -65,7 +61,6 @@ describe("feeEstimator", () => {
       feeStats: vi.fn().mockResolvedValue(mockFeeStats),
     };
 
-    (Horizon.Server as any).mockImplementation(() => mockHorizonServer);
   });
 
   afterEach(() => {
@@ -74,9 +69,7 @@ describe("feeEstimator", () => {
 
   describe("estimateTransactionFee", () => {
     it("should fetch fee estimate from Horizon with p95 percentile by default", async () => {
-      const estimate = await estimateTransactionFee(
-        "https://horizon-testnet.stellar.org",
-      );
+      const estimate = await estimateTransactionFeeWithServer(mockHorizonServer);
 
       expect(estimate).toMatchObject({
         source: "horizon",
@@ -92,8 +85,8 @@ describe("feeEstimator", () => {
     });
 
     it("should support p50 percentile for medium network fees", async () => {
-      const estimate = await estimateTransactionFee(
-        "https://horizon-testnet.stellar.org",
+      const estimate = await estimateTransactionFeeWithServer(
+        mockHorizonServer,
         "p50",
       );
 
@@ -105,8 +98,8 @@ describe("feeEstimator", () => {
     });
 
     it("should support p99 percentile for high network congestion", async () => {
-      const estimate = await estimateTransactionFee(
-        "https://horizon-testnet.stellar.org",
+      const estimate = await estimateTransactionFeeWithServer(
+        mockHorizonServer,
         "p99",
       );
 
@@ -129,13 +122,11 @@ describe("feeEstimator", () => {
         p70: 0,
         p80: 0,
         p90: 0,
+        p95: 0,
         p99: 0,
       };
 
-      const estimate = await estimateTransactionFee(
-        "https://horizon-testnet.stellar.org",
-        "p95",
-      );
+      const estimate = await estimateTransactionFeeWithServer(mockHorizonServer);
 
       expect(estimate.recommendedFeeStroops).toBe(100); // Minimum fallback
       expect(estimate.source).toBe("horizon");
@@ -144,9 +135,7 @@ describe("feeEstimator", () => {
     it("should return fallback estimate when Horizon is unreachable", async () => {
       mockHorizonServer.feeStats.mockRejectedValue(new Error("Network error"));
 
-      const estimate = await estimateTransactionFee(
-        "https://horizon-testnet.stellar.org",
-      );
+      const estimate = await estimateTransactionFeeWithServer(mockHorizonServer);
 
       expect(estimate).toMatchObject({
         source: "fallback",
@@ -162,9 +151,7 @@ describe("feeEstimator", () => {
         // Missing required fields
       });
 
-      const estimate = await estimateTransactionFee(
-        "https://horizon-testnet.stellar.org",
-      );
+      const estimate = await estimateTransactionFeeWithServer(mockHorizonServer);
 
       expect(estimate).toMatchObject({
         source: "fallback",
@@ -181,9 +168,7 @@ describe("feeEstimator", () => {
         // max_fee is missing
       });
 
-      const estimate = await estimateTransactionFee(
-        "https://horizon-testnet.stellar.org",
-      );
+      const estimate = await estimateTransactionFeeWithServer(mockHorizonServer);
 
       expect(estimate.source).toBe("fallback");
     });
@@ -195,10 +180,7 @@ describe("feeEstimator", () => {
         // p50 and other keys missing
       };
 
-      const estimate = await estimateTransactionFee(
-        "https://horizon-testnet.stellar.org",
-        "p50",
-      );
+      const estimate = await estimateTransactionFeeWithServer(mockHorizonServer, "p50");
 
       expect(estimate.source).toBe("fallback");
     });
@@ -206,17 +188,15 @@ describe("feeEstimator", () => {
 
   describe("caching behavior", () => {
     it("should cache fee estimates for 30 seconds", async () => {
-      const estimate1 = await estimateTransactionFee();
-      await estimateTransactionFee("https://horizon-testnet.stellar.org");
+      await estimateTransactionFeeWithServer(mockHorizonServer);
+      await estimateTransactionFeeWithServer(mockHorizonServer);
 
       // Should use cached estimate, not call Horizon again
       expect(mockHorizonServer.feeStats).toHaveBeenCalledTimes(1);
     });
 
     it("should refresh cache after TTL expires", async () => {
-      const estimate1 = await estimateTransactionFee(
-        "https://horizon-testnet.stellar.org",
-      );
+      await estimateTransactionFeeWithServer(mockHorizonServer);
       expect(mockHorizonServer.feeStats).toHaveBeenCalledTimes(1);
 
       // Fast-forward time by 31 seconds to expire cache
@@ -234,12 +214,11 @@ describe("feeEstimator", () => {
         p70: 1100,
         p80: 1200,
         p90: 1300,
+        p95: 1300,
         p99: 2500,
       };
 
-      const estimate2 = await estimateTransactionFee(
-        "https://horizon-testnet.stellar.org",
-      );
+      const estimate2 = await estimateTransactionFeeWithServer(mockHorizonServer);
 
       // Should fetch again due to cache expiration
       expect(mockHorizonServer.feeStats).toHaveBeenCalledTimes(2);
@@ -249,26 +228,24 @@ describe("feeEstimator", () => {
     });
 
     it("should clear cache when clearFeeCache is called", async () => {
-      await estimateTransactionFee("https://horizon-testnet.stellar.org");
+      await estimateTransactionFeeWithServer(mockHorizonServer);
       expect(mockHorizonServer.feeStats).toHaveBeenCalledTimes(1);
 
       clearFeeCache();
 
-      await estimateTransactionFee("https://horizon-testnet.stellar.org");
+      await estimateTransactionFeeWithServer(mockHorizonServer);
       expect(mockHorizonServer.feeStats).toHaveBeenCalledTimes(2);
     });
 
     it("should return cached estimate via getCachedFeeEstimate", async () => {
-      const estimate1 = await estimateTransactionFee(
-        "https://horizon-testnet.stellar.org",
-      );
+      const estimate1 = await estimateTransactionFeeWithServer(mockHorizonServer);
       const cachedEstimate = getCachedFeeEstimate();
 
       expect(cachedEstimate).toEqual(estimate1);
     });
 
     it("should return null from getCachedFeeEstimate when cache is expired", async () => {
-      await estimateTransactionFee("https://horizon-testnet.stellar.org");
+      await estimateTransactionFeeWithServer(mockHorizonServer);
 
       vi.useFakeTimers();
       vi.advanceTimersByTime(31 * 1000);
@@ -300,14 +277,12 @@ describe("feeEstimator", () => {
         p70: 2000,
         p80: 2500,
         p90: 3000,
+        p95: 3000,
         p99: 5000,
       };
       mockFeeStats.ledger_capacity_usage = 0.5;
 
-      const estimate = await estimateTransactionFee(
-        "https://horizon-testnet.stellar.org",
-        "p50",
-      );
+      const estimate = await estimateTransactionFeeWithServer(mockHorizonServer, "p50");
 
       expect(estimate.recommendedFeeStroops).toBe(1500);
       expect(estimate.source).toBe("horizon");
@@ -325,14 +300,12 @@ describe("feeEstimator", () => {
         p70: 20000,
         p80: 25000,
         p90: 30000,
+        p95: 30000,
         p99: 50000,
       };
       mockFeeStats.ledger_capacity_usage = 0.95;
 
-      const estimate = await estimateTransactionFee(
-        "https://horizon-testnet.stellar.org",
-        "p99",
-      );
+      const estimate = await estimateTransactionFeeWithServer(mockHorizonServer, "p99");
 
       expect(estimate.recommendedFeeStroops).toBe(50000);
     });
@@ -349,14 +322,12 @@ describe("feeEstimator", () => {
         p70: 100,
         p80: 100,
         p90: 100,
+        p95: 100,
         p99: 100,
       };
       mockFeeStats.ledger_capacity_usage = 0.1;
 
-      const estimate = await estimateTransactionFee(
-        "https://horizon-testnet.stellar.org",
-        "p50",
-      );
+      const estimate = await estimateTransactionFeeWithServer(mockHorizonServer, "p50");
 
       expect(estimate.recommendedFeeStroops).toBe(100);
     });
@@ -367,7 +338,7 @@ describe("feeEstimator", () => {
       const timeoutError = new Error("Request timeout");
       mockHorizonServer.feeStats.mockRejectedValue(timeoutError);
 
-      const estimate = await estimateTransactionFee(
+      const estimate = await estimateTransactionFeeWithServer(mockHorizonServer,
         "https://horizon-testnet.stellar.org",
       );
 
@@ -379,7 +350,7 @@ describe("feeEstimator", () => {
       const error = new Error("503 Service Unavailable");
       mockHorizonServer.feeStats.mockRejectedValue(error);
 
-      const estimate = await estimateTransactionFee(
+      const estimate = await estimateTransactionFeeWithServer(mockHorizonServer,
         "https://horizon-testnet.stellar.org",
       );
 
@@ -389,7 +360,7 @@ describe("feeEstimator", () => {
     it("should handle null response from feeStats", async () => {
       mockHorizonServer.feeStats.mockResolvedValue(null);
 
-      const estimate = await estimateTransactionFee(
+      const estimate = await estimateTransactionFeeWithServer(mockHorizonServer,
         "https://horizon-testnet.stellar.org",
       );
 
@@ -399,7 +370,7 @@ describe("feeEstimator", () => {
     it("should handle undefined response from feeStats", async () => {
       mockHorizonServer.feeStats.mockResolvedValue(undefined);
 
-      const estimate = await estimateTransactionFee(
+      const estimate = await estimateTransactionFeeWithServer(mockHorizonServer,
         "https://horizon-testnet.stellar.org",
       );
 
@@ -409,7 +380,7 @@ describe("feeEstimator", () => {
     it("should handle non-object response from feeStats", async () => {
       mockHorizonServer.feeStats.mockResolvedValue("not an object");
 
-      const estimate = await estimateTransactionFee(
+      const estimate = await estimateTransactionFeeWithServer(mockHorizonServer,
         "https://horizon-testnet.stellar.org",
       );
 
@@ -419,7 +390,7 @@ describe("feeEstimator", () => {
 
   describe("type safety", () => {
     it("should return properly typed FeeEstimate", async () => {
-      const estimate = await estimateTransactionFee(
+      const estimate = await estimateTransactionFeeWithServer(mockHorizonServer,
         "https://horizon-testnet.stellar.org",
       );
 
@@ -437,18 +408,9 @@ describe("feeEstimator", () => {
     });
 
     it("should have valid percentile values", async () => {
-      const p50 = await estimateTransactionFee(
-        "https://horizon-testnet.stellar.org",
-        "p50",
-      );
-      const p95 = await estimateTransactionFee(
-        "https://horizon-testnet.stellar.org",
-        "p95",
-      );
-      const p99 = await estimateTransactionFee(
-        "https://horizon-testnet.stellar.org",
-        "p99",
-      );
+      const p50 = await estimateTransactionFeeWithServer(mockHorizonServer, "p50");
+      const p95 = await estimateTransactionFeeWithServer(mockHorizonServer, "p95");
+      const p99 = await estimateTransactionFeeWithServer(mockHorizonServer, "p99");
 
       expect(["p50", "p95", "p99"]).toContain(p50.percentile);
       expect(["p50", "p95", "p99"]).toContain(p95.percentile);

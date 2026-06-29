@@ -87,7 +87,8 @@ function isValidFeeStats(stats: unknown): stats is HorizonFeeStats {
   }
   const s = stats as Record<string, unknown>;
   const maxFee = s.max_fee as Record<string, unknown> | undefined;
-  return (
+
+  const result =
     typeof s.last_ledger === "number" &&
     typeof s.last_ledger_base_fee === "number" &&
     typeof s.ledger_capacity_usage === "number" &&
@@ -95,30 +96,16 @@ function isValidFeeStats(stats: unknown): stats is HorizonFeeStats {
     maxFee !== null &&
     typeof maxFee.p50 === "number" &&
     typeof maxFee.p95 === "number" &&
-    typeof maxFee.p99 === "number"
-  );
+    typeof maxFee.p99 === "number";
+
+  return result;
 }
 
 /**
- * Estimates transaction fees by querying Horizon's fee_stats endpoint
- * Implements caching to reduce API calls and provides fallback behavior
- *
- * @param horizonUrl - The Horizon server URL to query
- * @param percentile - Fee percentile to use: "p50" (medium), "p95" (high), or "p99" (very high). Defaults to "p95" for reliability.
- * @returns Promise<FeeEstimate> with dynamic fees from Horizon or fallback values
- *
- * @example
- * // Get recommended fee for normal network conditions (p95)
- * const estimate = await estimateTransactionFee("https://horizon-testnet.stellar.org", "p95");
- * console.log(`Recommended fee: ${estimate.recommendedFeeStroops} stroops`);
- *
- * @example
- * // Get aggressive fee for congestion (p99)
- * const estimate = await estimateTransactionFee("https://horizon-testnet.stellar.org", "p99");
- * console.log(`Congestion fee: ${estimate.recommendedFeeStroops} stroops`);
+ * Internal function that accepts a Horizon server instance for testability
  */
-export async function estimateTransactionFee(
-  horizonUrl: string,
+export async function estimateTransactionFeeWithServer(
+  horizonServer: Horizon.Server,
   percentile: "p50" | "p95" | "p99" = "p95",
 ): Promise<FeeEstimate> {
   // Check cache first
@@ -132,8 +119,7 @@ export async function estimateTransactionFee(
   }
 
   try {
-    log.debug("Fetching fee estimate from Horizon", { horizonUrl, percentile });
-    const horizonServer = new Horizon.Server(horizonUrl);
+    log.debug("Fetching fee estimate from Horizon", { percentile });
     const stats = (await horizonServer.feeStats()) as unknown;
 
     if (!isValidFeeStats(stats)) {
@@ -184,6 +170,30 @@ export async function estimateTransactionFee(
     });
     return createFallbackEstimate(percentile);
   }
+}
+
+/**
+ * Estimates transaction fees by querying Horizon's fee_stats endpoint
+ * Implements caching to reduce API calls and provides fallback behavior
+ *
+ * @param horizonUrl - The Horizon server URL to query
+ * @param percentile - Fee percentile to use: "p50" (medium), "p95" (high), or "p99" (very high). Defaults to "p95" for reliability.
+ * @returns Promise<FeeEstimate> with dynamic fees from Horizon or fallback values
+ *
+ * @example
+ * // Get recommended fee for normal network conditions (p95)
+ * const estimate = await estimateTransactionFee("https://horizon-testnet.stellar.org", "p95");
+ *
+ * @example
+ * // Get aggressive fee for congestion (p99)
+ * const estimate = await estimateTransactionFee("https://horizon-testnet.stellar.org", "p99");
+ */
+export async function estimateTransactionFee(
+  horizonUrl: string,
+  percentile: "p50" | "p95" | "p99" = "p95",
+): Promise<FeeEstimate> {
+  const horizonServer = new Horizon.Server(horizonUrl);
+  return estimateTransactionFeeWithServer(horizonServer, percentile);
 }
 
 /**
