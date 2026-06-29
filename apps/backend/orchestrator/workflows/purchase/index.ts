@@ -29,9 +29,15 @@ export interface ProductMatch {
 import { randomUUID } from "node:crypto";
 import { PurchaseWorkflowMachine } from "../../state/index.js";
 import type {
-  WorkflowSnapshot,
+  WorkflowSnapshot as StateWorkflowSnapshot,
   TransitionHook,
 } from "../../state/index.js";
+
+export interface PurchaseWorkflowInput {
+  workflowId?: string;
+  delegationId: string;
+  userId: string;
+}
 
 export type PurchaseState =
   | "INITIATED"
@@ -204,7 +210,7 @@ export async function createWorkflow(
 
 export interface PurchaseWorkflowHandle {
   machine: PurchaseWorkflowMachine;
-  snapshot: WorkflowSnapshot;
+  snapshot: StateWorkflowSnapshot;
 }
 
 export interface PurchaseWorkflowState {
