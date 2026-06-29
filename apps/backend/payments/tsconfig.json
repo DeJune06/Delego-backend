@@ -11,13 +11,13 @@
     ]
   },
   "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "**/*.test.ts",
-    "node_modules",
+    "src/**/*",
     "escrow/**/*",
     "events/**/*",
     "settlement/**/*"
+  ],
+  "exclude": [
+    "**/*.test.ts",
+    "node_modules"
   ]
 }
