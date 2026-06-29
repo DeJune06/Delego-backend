@@ -109,7 +109,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^2.1.9
-        version: 2.1.9(@types/node@22.19.21)
+        version: 2.1.9(@types/node@22.20.0)
 
   apps/backend/notifications:
     dependencies:
@@ -130,7 +130,7 @@ importers:
         version: 9.0.3
       pg:
         specifier: ^8.11.0
-        version: 8.21.0
+        version: 8.22.0
       web-push:
         specifier: ^3.6.7
         version: 3.6.7
@@ -143,7 +143,7 @@ importers:
         version: 9.0.10
       '@types/node':
         specifier: ^22.0.0
-        version: 22.19.21
+        version: 22.20.0
       '@types/pg':
         specifier: ^8.11.0
         version: 8.20.0
@@ -173,13 +173,13 @@ importers:
         version: link:../../../packages/utils
       pg:
         specifier: ^8.21.0
-        version: 8.21.0
+        version: 8.22.0
       pg-hstore:
         specifier: ^2.3.4
         version: 2.3.4
       sequelize:
         specifier: ^6.37.8
-        version: 6.37.8(pg-hstore@2.3.4)(pg@8.21.0)
+        version: 6.37.8(pg-hstore@2.3.4)(pg@8.22.0)
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -269,7 +269,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^2.1.9
-        version: 2.1.9(@types/node@22.19.21)
+        version: 2.1.9(@types/node@22.20.0)
 
   apps/frontend:
     dependencies:
@@ -1288,9 +1288,6 @@ packages:
   available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
-
-  axios@1.18.1:
-    resolution: {integrity: sha512-3nTvFlvpn9Zu/RkHUqtc7/+al4UpRW5az71ap5zccp6e8RAYEzhMTecX8Dz1wWDYrPpUoB1HAQEGEAEvUr7S9g==}
 
   axios@1.18.1:
     resolution: {integrity: sha512-3nTvFlvpn9Zu/RkHUqtc7/+al4UpRW5az71ap5zccp6e8RAYEzhMTecX8Dz1wWDYrPpUoB1HAQEGEAEvUr7S9g==}
@@ -2855,8 +2852,8 @@ snapshots:
 
   '@types/pg@8.20.0':
     dependencies:
-      '@types/node': 25.9.3
-      pg-protocol: 1.14.0
+      '@types/node': 25.9.4
+      pg-protocol: 1.15.0
       pg-types: 2.2.0
 
   '@types/react-dom@19.2.3(@types/react@19.2.17)':
@@ -2958,16 +2955,6 @@ snapshots:
   available-typed-arrays@1.0.7:
     dependencies:
       possible-typed-array-names: 1.1.0
-
-  axios@1.18.1:
-    dependencies:
-      follow-redirects: 1.16.0
-      form-data: 4.0.6
-      https-proxy-agent: 5.0.1
-      proxy-from-env: 2.1.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
 
   axios@1.18.1:
     dependencies:
@@ -3926,7 +3913,7 @@ snapshots:
 
   wkx@0.5.0:
     dependencies:
-      '@types/node': 22.20.0
+      '@types/node': 25.9.4
 
   wrap-ansi@9.0.2:
     dependencies:
