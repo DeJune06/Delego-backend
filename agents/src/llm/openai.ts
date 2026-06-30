@@ -64,8 +64,8 @@ export class OpenAIClient implements LLMClient {
       body
     )) as OpenAIChatCompletionResponse;
 
-    const inputTokens: number = response.usage?.prompt_tokens ?? 0;
-    const outputTokens: number = response.usage?.completion_tokens ?? 0;
+    const inputTokens = response.usage?.prompt_tokens ?? 0;
+    const outputTokens = response.usage?.completion_tokens ?? 0;
     const totalTokens = inputTokens + outputTokens;
 
     if (options.tokenBudget && totalTokens > options.tokenBudget) {
@@ -74,7 +74,10 @@ export class OpenAIClient implements LLMClient {
       );
     }
 
-    const choice = response.choices?.[0];
+    const choice = (response.choices as Array<{
+      message?: { content?: string };
+      finish_reason?: string;
+    }>)?.[0];
     return {
       provider: "openai",
       model,
@@ -90,7 +93,11 @@ export class OpenAIClient implements LLMClient {
     url: string,
     body: unknown,
     attempt = 1
-  ): Promise<Record<string, unknown>> {
+  ): Promise<{
+    usage?: { prompt_tokens?: number; completion_tokens?: number };
+    choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
+    [key: string]: unknown;
+  }> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
