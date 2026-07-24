@@ -5,8 +5,11 @@
 import { createLogger } from "@delego/utils";
 import { startHttpServer } from "@delego/utils";
 import { registerRoutes } from "./routes.js";
+import { startReconciliationScheduler } from "./reconciliation/settlementReconciler.js";
 
 export { escrowCoordinator } from "./escrowCoordinator/index.js";
+export { reconcileSettlements, startReconciliationScheduler } from "./reconciliation/settlementReconciler.js";
+export type { SettlementDiscrepancy } from "./reconciliation/settlementReconciler.js";
 export type {
   EscrowCoordinator,
   EscrowStatusResult,
@@ -33,6 +36,19 @@ startHttpServer({
   serviceName: SERVICE_NAME,
   routes: registerRoutes(),
 });
+
+// ─── #358 Settlement Reconciliation ────────────────────────────────────────
+
+// Start periodic settlement reconciliation if enabled
+if (process.env.ENABLE_SETTLEMENT_RECONCILIATION !== "false") {
+  const stopScheduler = startReconciliationScheduler();
+
+  // Graceful shutdown
+  process.on("SIGTERM", () => {
+    log.info("SIGTERM received; stopping reconciliation scheduler");
+    stopScheduler();
+  });
+}
 
 // ─── #68 Dispute Resolution Arbiter Multi-Sig ────────────────────────────────
 
