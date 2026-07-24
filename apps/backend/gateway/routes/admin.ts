@@ -17,6 +17,7 @@ import { json } from "@delego/utils";
 import { extractAuth, getAuthenticatedUserContext } from "../middleware/auth.js";
 import { sendApiError, forbidden, unauthorized } from "../src/errors.js";
 import { aggregateRateLimitAnalytics } from "../src/rateLimit/analytics.js";
+import { getAllCircuitBreakerStats } from "../src/circuitBreaker.js";
 
 /** Returns true when the authenticated user has the "admin" role. */
 function isAdmin(req: IncomingMessage): boolean {
@@ -67,4 +68,28 @@ export async function rateLimitMetricsHandler(
     const message = err instanceof Error ? err.message : "Failed to fetch rate limit analytics";
     sendApiError(res, 500, "INTERNAL_ERROR", message, req);
   }
+}
+
+/**
+ * GET /api/v1/admin/circuit-breakers
+ *
+ * Issue #364 — Returns the current state and stats for each downstream
+ * service's circuit breaker (orchestrator, wallet, payments).
+ */
+export async function circuitBreakerStatusHandler(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  const auth = extractAuth(req);
+  if (!auth.userId) {
+    unauthorized(res, "Authentication required", req);
+    return;
+  }
+
+  if (!isAdmin(req)) {
+    forbidden(res, "Admin role required", req);
+    return;
+  }
+
+  json(res, 200, { data: getAllCircuitBreakerStats(), error: null });
 }
