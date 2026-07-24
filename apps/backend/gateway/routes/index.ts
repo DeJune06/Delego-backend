@@ -16,7 +16,7 @@ import {
   revokeDelegationHandler,
 } from "./delegations.js";
 import { getWalletHandler } from "./wallets.js";
-import { rateLimitMetricsHandler } from "./admin.js";
+import { rateLimitMetricsHandler, circuitBreakerStatusHandler } from "./admin.js";
 import { swaggerHandler } from "../src/swagger.js";
 
 /** Register all gateway routes */
@@ -36,6 +36,8 @@ export function registerRoutes(): Route[] {
     route("GET", "/api/v1/wallets/:walletId", getWalletHandler),
     // Admin — rate-limit dashboard (#340)
     route("GET", "/api/v1/admin/rate-limit/metrics", rateLimitMetricsHandler),
+    // Admin — circuit breaker status (#364)
+    route("GET", "/api/v1/admin/circuit-breakers", circuitBreakerStatusHandler),
     // Swagger UI (#352)
     route("GET", "/api/docs", swaggerHandler),
     route("GET", "/api/docs/openapi.json", swaggerHandler),
