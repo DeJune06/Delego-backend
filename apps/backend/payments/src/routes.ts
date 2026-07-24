@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { route, json, type Route } from "@delego/utils";
 import { escrowService } from "../escrow/index.js";
 import { getPaymentsHealth } from "../escrow/health.js";
+import { handleDeliveryConfirmationWebhook } from "../escrow/autoSettlement.js";
 import {
   validateDepositRequest,
   validateEscrowContractConfig,
@@ -180,6 +181,54 @@ export function registerRoutes(): Route[] {
           return;
         }
         sendOperationError(res, "ESCROW_REFUND_FAILED", err);
+      }
+    }),
+
+    // Issue #363 — delivery-confirmation webhook auto-triggers escrow release.
+    route("POST", "/webhooks/delivery-confirmation", async (req, res) => {
+      try {
+        const body = await readJsonBody(req);
+        const { webhookId, orderId, escrowId, escrowContractId, callerAddress, confirmedAt } = body;
+
+        if (
+          typeof webhookId !== "string" ||
+          !webhookId ||
+          typeof orderId !== "string" ||
+          !orderId ||
+          typeof escrowId !== "string" ||
+          !escrowId ||
+          typeof escrowContractId !== "string" ||
+          !escrowContractId ||
+          typeof callerAddress !== "string" ||
+          !callerAddress
+        ) {
+          sendValidationError(res, {
+            code: "VALIDATION_ERROR",
+            message:
+              "webhookId, orderId, escrowId, escrowContractId, and callerAddress are required",
+          });
+          return;
+        }
+
+        const result = await handleDeliveryConfirmationWebhook({
+          webhookId,
+          orderId,
+          escrowId,
+          escrowContractId,
+          callerAddress,
+          confirmedAt: typeof confirmedAt === "string" ? confirmedAt : new Date().toISOString(),
+        });
+
+        json(res, result.status === "failed" ? 502 : 200, { data: result, error: null });
+      } catch (err) {
+        if (err instanceof Error && err.message === "Invalid JSON body") {
+          sendValidationError(res, {
+            code: "VALIDATION_ERROR",
+            message: "Invalid JSON body",
+          });
+          return;
+        }
+        sendOperationError(res, "DELIVERY_WEBHOOK_FAILED", err);
       }
     }),
   ];
