@@ -23,6 +23,7 @@ export interface Delegation {
   userId: string;
   agentId: string;
   status: DelegationStatus;
+  expires_at_ledger?: number;
   policy: SpendingPolicy;
   createdAt: Date;
   updatedAt: Date;
