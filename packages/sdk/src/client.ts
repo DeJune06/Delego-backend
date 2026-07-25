@@ -9,6 +9,23 @@ export interface DelegoClientOptions {
   baseUrl: string;
   /** Bearer token for authenticated requests */
   token?: string;
+  /** Timeout in milliseconds for requests (default: 30000) */
+  timeout?: number;
+}
+
+export class TimeoutError extends Error {
+  constructor(message = "Request timed out") {
+    super(message);
+    this.name = "TimeoutError";
+  }
+}
+
+const STATE_CHANGING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+function getCsrfToken(): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  const match = document.cookie.match(/csrf-token=([^;]+)/);
+  return match?.[1];
 }
 
 /**
@@ -18,16 +35,19 @@ export interface DelegoClientOptions {
 export class DelegoClient {
   private readonly baseUrl: string;
   private readonly token?: string;
+  private readonly timeout: number;
 
   constructor(options: DelegoClientOptions) {
     this.baseUrl = options.baseUrl.replace(/\/$/, "");
     this.token = options.token;
+    this.timeout = options.timeout ?? 30000;
   }
 
   private async request<T>(
     path: string,
-    init?: RequestInit
+    init?: RequestInit & { timeout?: number; signal?: AbortSignal }
   ): Promise<ApiResponse<T>> {
+    const method = (init?.method ?? "GET").toUpperCase();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       ...(init?.headers as Record<string, string>),
@@ -35,13 +55,60 @@ export class DelegoClient {
     if (this.token) {
       headers.Authorization = `Bearer ${this.token}`;
     }
+    if (STATE_CHANGING_METHODS.has(method)) {
+      const csrfToken = getCsrfToken();
+      if (csrfToken) {
+        headers["X-CSRF-Token"] = csrfToken;
+      }
+    }
 
-    const response = await fetch(`${this.baseUrl}${path}`, {
-      ...init,
-      headers,
-    });
+    const controller = new AbortController();
+    const timeoutMs = init?.timeout ?? this.timeout;
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-    return response.json() as Promise<ApiResponse<T>>;
+    const externalSignal = init?.signal;
+    let onExternalAbort: (() => void) | undefined;
+    if (externalSignal) {
+      if (externalSignal.aborted) {
+        clearTimeout(timer);
+        throw new DOMException("The operation was aborted", "AbortError");
+      }
+      onExternalAbort = () => controller.abort();
+      externalSignal.addEventListener("abort", onExternalAbort, {
+        once: true,
+      });
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}${path}`, {
+        ...init,
+        signal: controller.signal,
+        headers,
+      });
+
+      clearTimeout(timer);
+      if (externalSignal && onExternalAbort) {
+        externalSignal.removeEventListener("abort", onExternalAbort);
+      }
+
+      return response.json() as Promise<ApiResponse<T>>;
+    } catch (error) {
+      clearTimeout(timer);
+      if (externalSignal && onExternalAbort) {
+        externalSignal.removeEventListener("abort", onExternalAbort);
+      }
+      if (
+        error instanceof DOMException &&
+        error.name === "AbortError" &&
+        controller.signal.aborted
+      ) {
+        if (externalSignal?.aborted) {
+          throw new DOMException("The operation was aborted", "AbortError");
+        }
+        throw new TimeoutError();
+      }
+      throw error;
+    }
   }
 
   async health(): Promise<ApiResponse<HealthCheckResponse>> {
