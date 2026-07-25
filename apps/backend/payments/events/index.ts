@@ -8,6 +8,10 @@
  * (or an in-process fallback in test environments) so that every downstream
  * consumer — analytics, notifications, audit logs — can subscribe from one
  * place.
+ *
+ * Also provides the idempotent Soroban Transaction Ledger tracking service
+ * that persists submission states (PENDING / CONFIRMED / FAILED) to the
+ * `soroban_transaction_ledger` table for reconciliation and retry loops.
  */
 
 import { createRequire } from "node:module";
@@ -18,6 +22,19 @@ import {
   type EscrowContractEvent,
   type ProcessedContractEventStore,
 } from "./dedup-store.js";
+import {
+  confirmTransaction as dbConfirmTransaction,
+  failTransaction as dbFailTransaction,
+  findByHash as dbFindByHash,
+  findByOrderId as dbFindByOrderId,
+  listPendingTransactions as dbListPending,
+  recordSubmissionIdempotent as dbRecordSubmission,
+  updateStatusIdempotent as dbUpdateStatus,
+  SorobanLedgerError,
+  SorobanLedgerErrorCode,
+  type SorobanTransactionLedgerRecord,
+  type SorobanTransactionStatus,
+} from "../src/escrowCoordinator/sorobanTransactionLedgerStore.js";
 
 const log = createLogger("payments:events", process.env.LOG_LEVEL ?? "info");
 
@@ -231,3 +248,353 @@ export {
   type EscrowContractEvent,
   type ProcessedContractEventStore,
 } from "./dedup-store.js";
+
+// ===========================================================================
+// Soroban Transaction Ledger Tracking Service
+// ===========================================================================
+
+export type {
+  SorobanTransactionLedgerRecord,
+  SorobanTransactionStatus,
+} from "../src/escrowCoordinator/sorobanTransactionLedgerStore.js";
+export {
+  SorobanLedgerError,
+  SorobanLedgerErrorCode,
+} from "../src/escrowCoordinator/sorobanTransactionLedgerStore.js";
+
+export interface SorobanTransactionSubmissionInput {
+  hash: string;
+  orderId?: string;
+  contractId: string;
+  method: string;
+  submittedAt?: Date;
+}
+
+export interface SorobanLedgerStore {
+  recordSubmission(
+    input: SorobanTransactionSubmissionInput
+  ): Promise<{ record: SorobanTransactionLedgerRecord; created: boolean }>;
+  updateStatus(
+    input: {
+      hash: string;
+      status: SorobanTransactionStatus;
+      errorDetails?: string;
+      confirmedAt?: Date;
+    }
+  ): Promise<{ record: SorobanTransactionLedgerRecord; updated: boolean }>;
+  findByHash(hash: string): Promise<SorobanTransactionLedgerRecord | null>;
+  findByOrderId(orderId: string): Promise<SorobanTransactionLedgerRecord[]>;
+  listPending(limit?: number): Promise<SorobanTransactionLedgerRecord[]>;
+  confirm(
+    hash: string,
+    confirmedAt?: Date
+  ): Promise<SorobanTransactionLedgerRecord>;
+  fail(
+    hash: string,
+    errorDetails: string
+  ): Promise<SorobanTransactionLedgerRecord>;
+}
+
+class PostgresSorobanLedgerStore implements SorobanLedgerStore {
+  async recordSubmission(input: SorobanTransactionSubmissionInput) {
+    return dbRecordSubmission(input);
+  }
+
+  async updateStatus(input: {
+    hash: string;
+    status: SorobanTransactionStatus;
+    errorDetails?: string;
+    confirmedAt?: Date;
+  }) {
+    return dbUpdateStatus(input);
+  }
+
+  async findByHash(hash: string) {
+    return dbFindByHash(hash);
+  }
+
+  async findByOrderId(orderId: string) {
+    return dbFindByOrderId(orderId);
+  }
+
+  async listPending(limit = 100) {
+    return dbListPending(limit);
+  }
+
+  async confirm(hash: string, confirmedAt?: Date) {
+    return dbConfirmTransaction(hash, confirmedAt);
+  }
+
+  async fail(hash: string, errorDetails: string) {
+    return dbFailTransaction(hash, errorDetails);
+  }
+}
+
+export class InMemorySorobanLedgerStore implements SorobanLedgerStore {
+  private readonly records = new Map<string, SorobanTransactionLedgerRecord>();
+
+  private now(): Date {
+    return new Date();
+  }
+
+  async recordSubmission(input: SorobanTransactionSubmissionInput) {
+    const existing = this.records.get(input.hash);
+    if (existing) {
+      const updated: SorobanTransactionLedgerRecord = {
+        ...existing,
+        updatedAt: this.now(),
+      };
+      this.records.set(input.hash, updated);
+      return { record: updated, created: false };
+    }
+
+    const submittedAt = input.submittedAt ?? this.now();
+    const record: SorobanTransactionLedgerRecord = {
+      hash: input.hash,
+      orderId: input.orderId ?? null,
+      contractId: input.contractId,
+      method: input.method,
+      status: "PENDING",
+      errorDetails: null,
+      submittedAt,
+      confirmedAt: null,
+      createdAt: this.now(),
+      updatedAt: this.now(),
+    };
+    this.records.set(input.hash, record);
+    return { record, created: true };
+  }
+
+  async updateStatus(input: {
+    hash: string;
+    status: SorobanTransactionStatus;
+    errorDetails?: string;
+    confirmedAt?: Date;
+  }) {
+    const existing = this.records.get(input.hash);
+    if (!existing) {
+      throw new SorobanLedgerError(
+        SorobanLedgerErrorCode.NOT_FOUND,
+        `Transaction not found for hash: ${input.hash}`
+      );
+    }
+
+    const isTerminal =
+      existing.status === "CONFIRMED" || existing.status === "FAILED";
+    if (isTerminal && existing.status === input.status) {
+      return { record: existing, updated: false };
+    }
+    if (isTerminal && existing.status !== input.status) {
+      throw new SorobanLedgerError(
+        SorobanLedgerErrorCode.INVALID_TRANSITION,
+        `Cannot transition from ${existing.status} to ${input.status}`
+      );
+    }
+
+    const updated: SorobanTransactionLedgerRecord = {
+      ...existing,
+      status: input.status,
+      errorDetails: input.errorDetails ?? existing.errorDetails,
+      confirmedAt: input.confirmedAt ?? existing.confirmedAt,
+      updatedAt: this.now(),
+    };
+    this.records.set(input.hash, updated);
+    return { record: updated, updated: true };
+  }
+
+  async findByHash(hash: string) {
+    return this.records.get(hash) ?? null;
+  }
+
+  async findByOrderId(orderId: string) {
+    return Array.from(this.records.values())
+      .filter((r) => r.orderId === orderId)
+      .sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+  }
+
+  async listPending(limit = 100) {
+    return Array.from(this.records.values())
+      .filter((r) => r.status === "PENDING")
+      .sort((a, b) => a.submittedAt.getTime() - b.submittedAt.getTime())
+      .slice(0, limit);
+  }
+
+  async confirm(hash: string, confirmedAt?: Date) {
+    const result = await this.updateStatus({
+      hash,
+      status: "CONFIRMED",
+      confirmedAt: confirmedAt ?? this.now(),
+    });
+    return result.record;
+  }
+
+  async fail(hash: string, errorDetails: string) {
+    const result = await this.updateStatus({
+      hash,
+      status: "FAILED",
+      errorDetails,
+    });
+    return result.record;
+  }
+}
+
+let sorobanLedgerStore: SorobanLedgerStore = new InMemorySorobanLedgerStore();
+
+export function setSorobanLedgerStore(store: SorobanLedgerStore): void {
+  sorobanLedgerStore = store;
+}
+
+export function resetSorobanLedgerStore(): void {
+  sorobanLedgerStore = new InMemorySorobanLedgerStore();
+}
+
+export function enablePostgresSorobanLedgerStore(): void {
+  sorobanLedgerStore = new PostgresSorobanLedgerStore();
+  log.info("Soroban ledger store switched to PostgreSQL backend");
+}
+
+// ---------------------------------------------------------------------------
+// High-level ledger tracking service functions
+// ---------------------------------------------------------------------------
+
+export async function recordSorobanTransactionSubmission(
+  input: SorobanTransactionSubmissionInput
+): Promise<{ record: SorobanTransactionLedgerRecord; created: boolean }> {
+  try {
+    const result = await sorobanLedgerStore.recordSubmission(input);
+    log[result.created ? "info" : "debug"](
+      "Soroban transaction submission recorded",
+      {
+        hash: input.hash,
+        orderId: input.orderId,
+        contractId: input.contractId,
+        method: input.method,
+        status: result.record.status,
+        created: result.created,
+      }
+    );
+    return result;
+  } catch (err) {
+    log.error("Failed to record Soroban transaction submission", {
+      hash: input.hash,
+      orderId: input.orderId,
+      error: err instanceof Error ? err.message : String(err),
+      code: (err as SorobanLedgerError)?.code,
+    });
+    throw err;
+  }
+}
+
+export async function confirmSorobanTransaction(
+  hash: string,
+  confirmedAt?: Date
+): Promise<SorobanTransactionLedgerRecord> {
+  try {
+    const record = await sorobanLedgerStore.confirm(hash, confirmedAt);
+    log.info("Soroban transaction confirmed on-chain", {
+      hash,
+      confirmedAt: record.confirmedAt?.toISOString(),
+    });
+    return record;
+  } catch (err) {
+    log.error("Failed to confirm Soroban transaction", {
+      hash,
+      error: err instanceof Error ? err.message : String(err),
+      code: (err as SorobanLedgerError)?.code,
+    });
+    throw err;
+  }
+}
+
+export async function failSorobanTransaction(
+  hash: string,
+  errorDetails: string
+): Promise<SorobanTransactionLedgerRecord> {
+  try {
+    const record = await sorobanLedgerStore.fail(hash, errorDetails);
+    log.warn("Soroban transaction marked as FAILED", {
+      hash,
+      errorDetails,
+    });
+    return record;
+  } catch (err) {
+    log.error("Failed to mark Soroban transaction as failed", {
+      hash,
+      error: err instanceof Error ? err.message : String(err),
+      code: (err as SorobanLedgerError)?.code,
+    });
+    throw err;
+  }
+}
+
+export async function updateSorobanTransactionStatus(input: {
+  hash: string;
+  status: SorobanTransactionStatus;
+  errorDetails?: string;
+  confirmedAt?: Date;
+}): Promise<{ record: SorobanTransactionLedgerRecord; updated: boolean }> {
+  try {
+    const result = await sorobanLedgerStore.updateStatus(input);
+    log[result.updated ? "info" : "debug"](
+      "Soroban transaction status update processed",
+      {
+        hash: input.hash,
+        status: input.status,
+        updated: result.updated,
+      }
+    );
+    return result;
+  } catch (err) {
+    log.error("Failed to update Soroban transaction status", {
+      hash: input.hash,
+      status: input.status,
+      error: err instanceof Error ? err.message : String(err),
+      code: (err as SorobanLedgerError)?.code,
+    });
+    throw err;
+  }
+}
+
+export async function getSorobanTransaction(
+  hash: string
+): Promise<SorobanTransactionLedgerRecord | null> {
+  try {
+    return await sorobanLedgerStore.findByHash(hash);
+  } catch (err) {
+    log.error("Failed to fetch Soroban transaction by hash", {
+      hash,
+      error: err instanceof Error ? err.message : String(err),
+      code: (err as SorobanLedgerError)?.code,
+    });
+    throw err;
+  }
+}
+
+export async function getSorobanTransactionsByOrderId(
+  orderId: string
+): Promise<SorobanTransactionLedgerRecord[]> {
+  try {
+    return await sorobanLedgerStore.findByOrderId(orderId);
+  } catch (err) {
+    log.error("Failed to fetch Soroban transactions by order ID", {
+      orderId,
+      error: err instanceof Error ? err.message : String(err),
+      code: (err as SorobanLedgerError)?.code,
+    });
+    throw err;
+  }
+}
+
+export async function listPendingSorobanTransactions(
+  limit = 100
+): Promise<SorobanTransactionLedgerRecord[]> {
+  try {
+    return await sorobanLedgerStore.listPending(limit);
+  } catch (err) {
+    log.error("Failed to list pending Soroban transactions", {
+      error: err instanceof Error ? err.message : String(err),
+      code: (err as SorobanLedgerError)?.code,
+    });
+    throw err;
+  }
+}
