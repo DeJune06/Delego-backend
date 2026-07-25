@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { DelegoClient, TimeoutError } from "./client.js";
+import { HealthCheckResponseSchema } from "./schemas.js";
 
 describe("DelegoClient", () => {
   beforeEach(() => {
@@ -134,10 +135,15 @@ describe("DelegoClient", () => {
       "csrf-token=test-csrf-value"
     );
     const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ data: null }))
+      new Response(
+        JSON.stringify({
+          data: { status: "ok", service: "test", version: "1.0.0", timestamp: "2024-01-01T00:00:00Z" },
+          error: null,
+        })
+      )
     );
 
-    await client["request"]("/api/test", { method: "POST" });
+    await client["request"]("/api/test", { method: "POST" }, HealthCheckResponseSchema);
 
     const init = spy.mock.calls[0][1] as RequestInit;
     const headers = init!.headers as Record<string, string>;
@@ -150,7 +156,12 @@ describe("DelegoClient", () => {
       "csrf-token=test-csrf-value"
     );
     const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ data: null }))
+      new Response(
+        JSON.stringify({
+          data: { status: "ok", service: "test", version: "1.0.0", timestamp: "2024-01-01T00:00:00Z" },
+          error: null,
+        })
+      )
     );
 
     await client.health();
@@ -181,11 +192,26 @@ describe("DelegoClient", () => {
       timeout: 5000,
     });
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ data: { status: "ok" } }))
+      new Response(
+        JSON.stringify({
+          data: {
+            status: "ok",
+            service: "gateway",
+            version: "1.0.0",
+            timestamp: "2024-01-01T00:00:00Z",
+          },
+          error: null,
+        })
+      )
     );
 
     const res = await client.health();
-    expect(res.data).toEqual({ status: "ok" });
+    expect(res.data).toEqual({
+      status: "ok",
+      service: "gateway",
+      version: "1.0.0",
+      timestamp: "2024-01-01T00:00:00Z",
+    });
   });
 
   it("cleans up timeout after successful response", async () => {
@@ -194,7 +220,17 @@ describe("DelegoClient", () => {
       timeout: 5000,
     });
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ data: null }))
+      new Response(
+        JSON.stringify({
+          data: {
+            status: "ok",
+            service: "gateway",
+            version: "1.0.0",
+            timestamp: "2024-01-01T00:00:00Z",
+          },
+          error: null,
+        })
+      )
     );
 
     await client.health();
