@@ -1,9 +1,14 @@
 import type {
   ApiResponse,
-  Delegation,
   HealthCheckResponse,
-  Order,
 } from "@delego/types";
+import {
+  ApiResponseSchema,
+  DelegationSchema,
+  HealthCheckResponseSchema,
+  OrderSchema,
+  validateResponse,
+} from "./schemas.js";
 
 export interface DelegoClientOptions {
   baseUrl: string;
@@ -45,7 +50,8 @@ export class DelegoClient {
 
   private async request<T>(
     path: string,
-    init?: RequestInit & { timeout?: number; signal?: AbortSignal }
+    init?: RequestInit & { timeout?: number; signal?: AbortSignal },
+    dataSchema?: import("zod").ZodType<unknown>
   ): Promise<ApiResponse<T>> {
     const method = (init?.method ?? "GET").toUpperCase();
     const headers: Record<string, string> = {
@@ -91,7 +97,12 @@ export class DelegoClient {
         externalSignal.removeEventListener("abort", onExternalAbort);
       }
 
-      return response.json() as Promise<ApiResponse<T>>;
+      const rawData = await response.json();
+      if (dataSchema) {
+        const schema = ApiResponseSchema(dataSchema);
+        return validateResponse(rawData, schema) as ApiResponse<T>;
+      }
+      return rawData as ApiResponse<T>;
     } catch (error) {
       clearTimeout(timer);
       if (externalSignal && onExternalAbort) {
@@ -112,16 +123,28 @@ export class DelegoClient {
   }
 
   async health(): Promise<ApiResponse<HealthCheckResponse>> {
-    return this.request<HealthCheckResponse>("/health");
+    return this.request<HealthCheckResponse>(
+      "/health",
+      undefined,
+      HealthCheckResponseSchema
+    );
   }
 
-  // TODO: Implement delegation endpoints
-  async getDelegations(): Promise<ApiResponse<Delegation[]>> {
-    return this.request<Delegation[]>("/api/v1/delegations");
+  async getDelegations(): Promise<ApiResponse<import("@delego/types").Delegation[]>> {
+    return this.request<import("@delego/types").Delegation[]>(
+      "/api/v1/delegations",
+      undefined,
+      z.array(DelegationSchema)
+    );
   }
 
-  // TODO: Implement order endpoints
-  async getOrders(): Promise<ApiResponse<Order[]>> {
-    return this.request<Order[]>("/api/v1/orders");
+  async getOrders(): Promise<ApiResponse<import("@delego/types").Order[]>> {
+    return this.request<import("@delego/types").Order[]>(
+      "/api/v1/orders",
+      undefined,
+      z.array(OrderSchema)
+    );
   }
 }
+
+import { z } from "zod";

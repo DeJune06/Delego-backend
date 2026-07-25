@@ -19,7 +19,17 @@ describe("DelegoClient", () => {
   it("strips trailing slash from baseUrl", () => {
     const client = new DelegoClient({ baseUrl: "http://localhost:3000/" });
     const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ data: null }))
+      new Response(
+        JSON.stringify({
+          data: {
+            status: "ok",
+            service: "test",
+            version: "1.0.0",
+            timestamp: "2024-01-01T00:00:00Z",
+          },
+          error: null,
+        })
+      )
     );
 
     client.health();
@@ -36,7 +46,17 @@ describe("DelegoClient", () => {
       token: "secret-token",
     });
     const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ data: null }))
+      new Response(
+        JSON.stringify({
+          data: {
+            status: "ok",
+            service: "test",
+            version: "1.0.0",
+            timestamp: "2024-01-01T00:00:00Z",
+          },
+          error: null,
+        })
+      )
     );
 
     await client.health();
@@ -49,7 +69,17 @@ describe("DelegoClient", () => {
   it("health() calls GET /health", async () => {
     const client = new DelegoClient({ baseUrl: "http://localhost" });
     const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ data: { status: "ok" } }))
+      new Response(
+        JSON.stringify({
+          data: {
+            status: "ok",
+            service: "gateway",
+            version: "1.0.0",
+            timestamp: "2024-01-01T00:00:00Z",
+          },
+          error: null,
+        })
+      )
     );
 
     const res = await client.health();
@@ -58,13 +88,38 @@ describe("DelegoClient", () => {
       "http://localhost/health",
       expect.anything()
     );
-    expect(res.data).toEqual({ status: "ok" });
+    expect(res.data).toEqual({
+      status: "ok",
+      service: "gateway",
+      version: "1.0.0",
+      timestamp: "2024-01-01T00:00:00Z",
+    });
   });
 
   it("returns the ApiResponse shape from the API", async () => {
     const client = new DelegoClient({ baseUrl: "http://localhost" });
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ data: [{ id: "1" }], error: null }))
+      new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: "1",
+              userId: "user-1",
+              agentId: "agent-1",
+              status: "active",
+              policy: {
+                maxPerTransaction: 1000,
+                maxTotal: 10000,
+                allowedMerchants: [],
+                expiresAt: null,
+              },
+              createdAt: "2024-01-01T00:00:00Z",
+              updatedAt: "2024-01-01T00:00:00Z",
+            },
+          ],
+          error: null,
+        })
+      )
     );
 
     const res = await client.getDelegations();
