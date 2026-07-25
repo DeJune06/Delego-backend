@@ -1,0 +1,28 @@
+{
+  "escrow_created_subject": "Se ha creado el depósito en garantía de tu pedido",
+  "escrow_created_body": "Se ha creado el depósito en garantía para el pedido {{orderId}}. Los fondos de {{amount}} están retenidos de forma segura hasta que se confirme tu pedido de {{merchant}}.",
+
+  "escrow_released_subject": "Depósito liberado para el pedido {{orderId}}",
+  "escrow_released_body": "¡Buenas noticias! El depósito en garantía para el pedido {{orderId}} ha sido liberado. Se ha enviado un pago de {{amount}} a {{merchant}}.",
+
+  "escrow_refunded_subject": "Reembolso procesado para el pedido {{orderId}}",
+  "escrow_refunded_body": "El depósito en garantía para el pedido {{orderId}} ha sido reembolsado. {{amount}} será devuelto a tu cuenta.",
+
+  "escrow_disputed_subject": "Disputa abierta para el pedido {{orderId}}",
+  "escrow_disputed_body": "Se ha abierto una disputa para el pedido {{orderId}} con {{merchant}}. Nuestro equipo revisará la situación. Los fondos de {{amount}} permanecen en depósito.",
+
+  "payment_failed_subject": "Pago fallido para el pedido {{orderId}}",
+  "payment_failed_body": "Lamentablemente, tu pago de {{amount}} para el pedido {{orderId}} a {{merchant}} ha fallado. Por favor, revisa tus datos de pago e inténtalo de nuevo.",
+
+  "permission_granted_subject": "Permiso de gasto concedido a {{delegate}}",
+  "permission_granted_body": "Has concedido a {{delegate}} permiso para actuar en tu nombre en compras de hasta {{amount}}. Este permiso puede ser revocado en cualquier momento.",
+
+  "permission_revoked_subject": "Permiso de gasto revocado a {{delegate}}",
+  "permission_revoked_body": "El permiso de gasto previamente concedido a {{delegate}} por {{owner}} ha sido revocado. No se pueden realizar más transacciones bajo este permiso.",
+
+  "permission_expiry_updated_subject": "Fecha de expiración del permiso actualizada para {{delegate}}",
+  "permission_expiry_updated_body": "La fecha de expiración del permiso de gasto concedido a {{delegate}} por {{owner}} ha sido actualizada. Nueva expiración: {{newExpiry}}.",
+
+  "transaction_approval_subject": "Se requiere aprobación para el pedido {{orderId}}",
+  "transaction_approval_body": "Tu agente de IA solicita aprobación para completar el pedido {{orderId}} por {{amount}} de {{merchant}}. Por favor, revisa y aprueba en: {{approvalUrl}}"
+}
