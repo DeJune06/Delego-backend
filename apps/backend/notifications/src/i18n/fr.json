@@ -1,0 +1,28 @@
+{
+  "escrow_created_subject": "Le séquestre de votre commande a été créé",
+  "escrow_created_body": "Le séquestre pour la commande {{orderId}} a été créé. Les fonds de {{amount}} sont conservés en sécurité jusqu'à la confirmation de votre commande auprès de {{merchant}}.",
+
+  "escrow_released_subject": "Séquestre libéré pour la commande {{orderId}}",
+  "escrow_released_body": "Bonne nouvelle ! Le séquestre pour la commande {{orderId}} a été libéré. Un paiement de {{amount}} a été envoyé à {{merchant}}.",
+
+  "escrow_refunded_subject": "Remboursement traité pour la commande {{orderId}}",
+  "escrow_refunded_body": "Le séquestre pour la commande {{orderId}} a été remboursé. {{amount}} sera restitué sur votre compte.",
+
+  "escrow_disputed_subject": "Litige ouvert pour la commande {{orderId}}",
+  "escrow_disputed_body": "Un litige a été ouvert pour la commande {{orderId}} avec {{merchant}}. Notre équipe examinera la situation. Les fonds de {{amount}} restent en séquestre.",
+
+  "payment_failed_subject": "Paiement échoué pour la commande {{orderId}}",
+  "payment_failed_body": "Malheureusement, votre paiement de {{amount}} pour la commande {{orderId}} auprès de {{merchant}} a échoué. Veuillez vérifier vos informations de paiement et réessayer.",
+
+  "permission_granted_subject": "Permission de dépense accordée à {{delegate}}",
+  "permission_granted_body": "Vous avez accordé à {{delegate}} la permission d'agir en votre nom pour des achats jusqu'à {{amount}}. Cette permission peut être révoquée à tout moment.",
+
+  "permission_revoked_subject": "Permission de dépense révoquée pour {{delegate}}",
+  "permission_revoked_body": "La permission de dépense précédemment accordée à {{delegate}} par {{owner}} a été révoquée. Aucune autre transaction ne peut être effectuée dans le cadre de cette permission.",
+
+  "permission_expiry_updated_subject": "Date d'expiration de la permission mise à jour pour {{delegate}}",
+  "permission_expiry_updated_body": "La date d'expiration de la permission de dépense accordée à {{delegate}} par {{owner}} a été mise à jour. Nouvelle expiration : {{newExpiry}}.",
+
+  "transaction_approval_subject": "Approbation requise pour la commande {{orderId}}",
+  "transaction_approval_body": "Votre agent IA demande l'approbation pour finaliser la commande {{orderId}} d'un montant de {{amount}} auprès de {{merchant}}. Veuillez consulter et approuver sur : {{approvalUrl}}"
+}

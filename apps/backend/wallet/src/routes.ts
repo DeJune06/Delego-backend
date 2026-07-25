@@ -1,6 +1,7 @@
 import type { IncomingMessage } from "node:http";
-import { route, json, type Route } from "@delego/utils";
+import { route, json, isValidStellarPublicKey, validatePublicKeyMiddleware, type Route } from "@delego/utils";
 import { accountService } from "../stellar/account.js";
+import { mergeAccount, previewMerge } from "../stellar/recovery.js";
 import { transactionService } from "../transactions/index.js";
 import { vaultService } from "./vault.js";
 import type { StellarNetwork } from "@delego/types";
@@ -79,6 +80,8 @@ async function readJsonBody<T>(req: IncomingMessage): Promise<T> {
 }
 
 export function registerRoutes(): Route[] {
+  const validateAddress = validatePublicKeyMiddleware("address");
+
   return [
     // Create new Stellar wallet (Master or Delegate keypair)
     route("POST", "/wallets/create", async (req, res) => {
@@ -99,6 +102,9 @@ export function registerRoutes(): Route[] {
     // Retrieve details for a specific wallet address
     route("GET", "/wallets/:address", async (_req, res, params) => {
       try {
+        await validateAddress(_req, res, params);
+        if (res.writableEnded) return;
+
         const address = params.address;
         if (!address) {
           throw new Error("Address parameter is required");
@@ -147,6 +153,9 @@ export function registerRoutes(): Route[] {
         if (!body.sourceAddress || !body.contractId || !body.method || !body.args) {
           throw new Error("Missing required transaction simulation parameters");
         }
+        if (!isValidStellarPublicKey(body.sourceAddress)) {
+          throw new Error("Malformed Stellar public key address");
+        }
 
         const simResult = await transactionService.simulate({
           sourceAddress: body.sourceAddress,
@@ -179,6 +188,9 @@ export function registerRoutes(): Route[] {
         if (!body.sourceAddress || !body.contractId || !body.method || !body.args) {
           throw new Error("Missing required transaction submission parameters");
         }
+        if (!isValidStellarPublicKey(body.sourceAddress)) {
+          throw new Error("Malformed Stellar public key address");
+        }
 
         const txResult = await transactionService.submit({
           sourceAddress: body.sourceAddress,
@@ -197,14 +209,103 @@ export function registerRoutes(): Route[] {
       }
     }),
 
+    // Merge (recover) deprecated account into destination
+    route("POST", "/api/v1/wallet/merge", async (req, res) => {
+      try {
+        const body = await readJsonBody<{
+          sourceAddress: string;
+          destinationAddress: string;
+          network?: StellarNetwork;
+        }>(req);
+
+        if (!body.sourceAddress || !body.destinationAddress) {
+          json(res, 400, {
+            data: null,
+            error: { code: "BAD_REQUEST", message: "sourceAddress and destinationAddress are required" },
+          });
+          return;
+        }
+        if (!isValidStellarPublicKey(body.sourceAddress)) {
+          json(res, 400, {
+            data: null,
+            error: { code: "BAD_REQUEST", message: "Invalid source Stellar address format" },
+          });
+          return;
+        }
+        if (!isValidStellarPublicKey(body.destinationAddress)) {
+          json(res, 400, {
+            data: null,
+            error: { code: "BAD_REQUEST", message: "Invalid destination Stellar address format" },
+          });
+          return;
+        }
+
+        const result = await mergeAccount({
+          sourceAddress: body.sourceAddress,
+          destinationAddress: body.destinationAddress,
+          network: body.network,
+        });
+
+        json(res, 200, { data: result, error: null });
+      } catch (err: any) {
+        log.error("POST merge account error", { error: err.message });
+        json(res, 400, {
+          data: null,
+          error: { code: "MERGE_FAILED", message: err.message },
+        });
+      }
+    }),
+
+    // Preview merge amount without executing
+    route("POST", "/api/v1/wallet/merge/preview", async (req, res) => {
+      try {
+        const body = await readJsonBody<{
+          sourceAddress: string;
+          network?: StellarNetwork;
+        }>(req);
+
+        if (!body.sourceAddress) {
+          json(res, 400, {
+            data: null,
+            error: { code: "BAD_REQUEST", message: "sourceAddress is required" },
+          });
+          return;
+        }
+        if (!isValidStellarPublicKey(body.sourceAddress)) {
+          json(res, 400, {
+            data: null,
+            error: { code: "BAD_REQUEST", message: "Invalid Stellar address format" },
+          });
+          return;
+        }
+
+        const preview = await previewMerge({
+          sourceAddress: body.sourceAddress,
+          network: body.network,
+        });
+
+        json(res, 200, { data: preview, error: null });
+      } catch (err: any) {
+        log.error("POST merge preview error", { error: err.message });
+        json(res, 400, {
+          data: null,
+          error: { code: "PREVIEW_FAILED", message: err.message },
+        });
+      }
+    }),
+
     // Get native XLM and token balances
     route("GET", "/api/v1/wallet/:address/balance", async (_req, res, params) => {
       try {
+        await validateAddress(_req, res, params);
+        if (res.writableEnded) return;
+
         const address = params.address;
-        if (!address || address.length !== 56 || !address.startsWith("G") || !/^G[A-Z2-7]{55}$/.test(address)) {
+
+        if (!isValidStellarPublicKey(address)) {
           json(res, 400, {
             data: null,
-            error: { code: "BAD_REQUEST", message: "Malformed Stellar public key address" }
+            error: { code: "BAD_REQUEST", message: "Invalid Stellar address format" },
           });
           return;
         }
@@ -348,14 +449,10 @@ export function registerRoutes(): Route[] {
     // Get recent transaction history
     route("GET", "/api/v1/wallet/:address/transactions", async (req, res, params) => {
       try {
+        await validateAddress(req, res, params);
+        if (res.writableEnded) return;
+
         const address = params.address;
-        if (!address || address.length !== 56 || !address.startsWith("G") || !/^G[A-Z2-7]{55}$/.test(address)) {
-          json(res, 400, {
-            data: null,
-            error: { code: "BAD_REQUEST", message: "Malformed Stellar public key address" }
-          });
-          return;
-        }
 
         const url = new URL(req.url ?? "", `http://${req.headers.host ?? "localhost"}`);
         const cursorParam = url.searchParams.get("cursor");

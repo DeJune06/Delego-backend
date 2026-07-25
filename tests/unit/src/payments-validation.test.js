@@ -1,13 +1,18 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  acquireLock,
+  getFundingLock,
+  releaseLock,
   validateDepositRequest,
   validateEscrowContractConfig,
   validateIdempotencyKey,
   validateInitializeRequest,
   validateRefundRequest,
   validateReleaseRequest,
+  _resetLockRedisClient,
 } from "../../../apps/backend/payments/dist/src/validation.js";
+
 
 const VALID_ADDRESS = "GBBO4ZDDZTSM2GKN4JP4EKBPRXKEHUN36XXH2BHR7J4QKKPOJ7C7LDVF";
 const VALID_CONTRACT = "CA7QYNF7SOWQ3JLRS2ZHG7OYBTLZQQLR3WZTAELUIINI7KBZQC3NCJMT";
@@ -65,12 +70,55 @@ describe("payments escrow validation", () => {
     assert.equal(release.ok, true);
     assert.equal(release.value.escrowId, "42");
 
-    const invalid = validateRefundRequest({ sourceAddress: VALID_ADDRESS }, "-1");
+    const invalid = validateRefundRequest(
+      { sourceAddress: VALID_ADDRESS, refundReasonCode: "timeout" },
+      "-1"
+    );
     assert.equal(invalid.ok, false);
 
-    const missing = validateRefundRequest({ sourceAddress: VALID_ADDRESS }, "");
+    const missing = validateRefundRequest(
+      { sourceAddress: VALID_ADDRESS, refundReasonCode: "timeout" },
+      ""
+    );
     assert.equal(missing.ok, false);
   });
+
+  it("accepts valid refundReasonCode values", () => {
+    const codes = [
+      "timeout",
+      "buyer_cancelled",
+      "merchant_cancelled",
+      "dispute_buyer",
+      "system_error",
+    ];
+
+    for (const code of codes) {
+      const result = validateRefundRequest(
+        { sourceAddress: VALID_ADDRESS, refundReasonCode: code },
+        "42"
+      );
+      assert.equal(result.ok, true);
+      assert.equal(result.value.escrowId, "42");
+      assert.equal(result.value.refundReasonCode, code);
+    }
+  });
+
+  it("rejects missing refundReasonCode", () => {
+    const result = validateRefundRequest({ sourceAddress: VALID_ADDRESS }, "42");
+    assert.equal(result.ok, false);
+    assert.equal(result.error.code, "VALIDATION_ERROR");
+  });
+
+  it("rejects invalid refundReasonCode", () => {
+    const result = validateRefundRequest(
+      { sourceAddress: VALID_ADDRESS, refundReasonCode: "late" },
+      "42"
+    );
+    assert.equal(result.ok, false);
+    assert.equal(result.error.code, "VALIDATION_ERROR");
+    assert.match(result.error.message, /Invalid refundReasonCode/);
+  });
+
 
   it("reports missing ESCROW_CONTRACT_ID config", () => {
     const original = process.env.ESCROW_CONTRACT_ID;
@@ -159,3 +207,58 @@ describe("validateIdempotencyKey", () => {
     assert.equal(result.value.key, "valid-key-uppercase");
   });
 });
+
+describe("EscrowFundingLock mechanisms", () => {
+  it("acquires lock successfully for valid order", async () => {
+    _resetLockRedisClient();
+    const orderId = "order-unit-101";
+    const acquired = await acquireLock(orderId, 10000);
+    assert.equal(acquired, true);
+
+    const lock = getFundingLock(orderId);
+    assert.ok(lock);
+    assert.equal(lock.orderId, orderId);
+    assert.equal(lock.ttlMs, 10000);
+    assert.ok(lock.lockToken);
+    assert.ok(lock.createdAt > 0);
+  });
+
+  it("blocks concurrent lock requests for the same order", async () => {
+    _resetLockRedisClient();
+    const orderId = "order-unit-102";
+    const first = await acquireLock(orderId, 10000);
+    assert.equal(first, true);
+
+    const second = await acquireLock(orderId, 10000);
+    assert.equal(second, false);
+  });
+
+  it("releases lock cleanly on completion", async () => {
+    _resetLockRedisClient();
+    const orderId = "order-unit-103";
+    const acquired = await acquireLock(orderId, 10000);
+    assert.equal(acquired, true);
+
+    await releaseLock(orderId);
+    assert.equal(getFundingLock(orderId), null);
+
+    const reacquired = await acquireLock(orderId, 10000);
+    assert.equal(reacquired, true);
+  });
+
+  it("automatically expires lock after TTL timeout", async () => {
+    _resetLockRedisClient();
+    const orderId = "order-unit-104";
+    const ttlMs = 40;
+    const acquired = await acquireLock(orderId, ttlMs);
+    assert.equal(acquired, true);
+
+    assert.equal(await acquireLock(orderId, ttlMs), false);
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const reacquire = await acquireLock(orderId, ttlMs);
+    assert.equal(reacquire, true);
+  });
+});
+
