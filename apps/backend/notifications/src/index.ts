@@ -10,6 +10,7 @@ import {
 } from "./dispatcher.js";
 import { getVapidPublicKey } from "../push/index.js";
 import { startPermissionEventListener } from "./permissionEventListener.js";
+import { startEscrowEventListener } from "./escrowEventListener.js";
 import {
   cancelScheduledNotification,
   getScheduledNotification,
@@ -59,6 +60,29 @@ if (rpcUrl && permissionsContractId) {
 } else {
   log.info(
     "Permission event listener disabled (set STELLAR_RPC_URL and PERMISSIONS_CONTRACT_ID to enable)"
+  );
+}
+
+// Issue #56 — opt-in escrow event listener.
+// Requires both STELLAR_RPC_URL and ESCROW_CONTRACT_ID to be set.
+const escrowContractId = process.env.ESCROW_CONTRACT_ID ?? "";
+
+let escrowListener: { stop(): Promise<void> } | null = null;
+if (rpcUrl && escrowContractId) {
+  try {
+    escrowListener = startEscrowEventListener(rpcUrl, escrowContractId);
+    log.info("Escrow event listener wired to boot", {
+      rpcUrl,
+      contractId: escrowContractId,
+    });
+  } catch (err) {
+    log.error("Failed to start escrow event listener", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+} else {
+  log.info(
+    "Escrow event listener disabled (set STELLAR_RPC_URL and ESCROW_CONTRACT_ID to enable)"
   );
 }
 
@@ -248,6 +272,15 @@ async function gracefulShutdown(signal: NodeJS.Signals): Promise<void> {
       await permissionListener.stop();
     } catch (err) {
       log.error("Failed to stop permission event listener cleanly", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+  if (escrowListener) {
+    try {
+      await escrowListener.stop();
+    } catch (err) {
+      log.error("Failed to stop escrow event listener cleanly", {
         error: err instanceof Error ? err.message : String(err),
       });
     }

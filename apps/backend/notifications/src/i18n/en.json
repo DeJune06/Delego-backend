@@ -1,0 +1,28 @@
+{
+  "escrow_created_subject": "Your order escrow has been created",
+  "escrow_created_body": "Your escrow for order {{orderId}} has been created. Funds of {{amount}} are held securely until your order from {{merchant}} is confirmed.",
+
+  "escrow_released_subject": "Escrow released for order {{orderId}}",
+  "escrow_released_body": "Great news! The escrow for order {{orderId}} has been released. A payment of {{amount}} has been sent to {{merchant}}.",
+
+  "escrow_refunded_subject": "Refund processed for order {{orderId}}",
+  "escrow_refunded_body": "Your escrow for order {{orderId}} has been refunded. {{amount}} will be returned to your account.",
+
+  "escrow_disputed_subject": "Dispute opened for order {{orderId}}",
+  "escrow_disputed_body": "A dispute has been opened for order {{orderId}} with {{merchant}}. Our team will review the situation. Funds of {{amount}} remain in escrow.",
+
+  "payment_failed_subject": "Payment failed for order {{orderId}}",
+  "payment_failed_body": "Unfortunately, your payment of {{amount}} for order {{orderId}} to {{merchant}} has failed. Please review your payment details and try again.",
+
+  "permission_granted_subject": "Spending permission granted to {{delegate}}",
+  "permission_granted_body": "You have granted {{delegate}} permission to act on your behalf for purchases up to {{amount}}. This permission can be revoked at any time.",
+
+  "permission_revoked_subject": "Spending permission revoked from {{delegate}}",
+  "permission_revoked_body": "The spending permission previously granted to {{delegate}} by {{owner}} has been revoked. No further transactions can be made under this permission.",
+
+  "permission_expiry_updated_subject": "Permission expiry updated for {{delegate}}",
+  "permission_expiry_updated_body": "The expiry date for the spending permission granted to {{delegate}} by {{owner}} has been updated. New expiry: {{newExpiry}}.",
+
+  "transaction_approval_subject": "Approval required for order {{orderId}}",
+  "transaction_approval_body": "Your AI agent is requesting approval to complete order {{orderId}} for {{amount}} from {{merchant}}. Please review and approve at: {{approvalUrl}}"
+}
