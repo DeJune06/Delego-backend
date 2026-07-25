@@ -130,10 +130,12 @@ export class DelegoClient {
     );
   }
 
-  async getDelegations(): Promise<ApiResponse<import("@delego/types").Delegation[]>> {
+  async getDelegations(
+    options?: { signal?: AbortSignal }
+  ): Promise<ApiResponse<import("@delego/types").Delegation[]>> {
     return this.request<import("@delego/types").Delegation[]>(
       "/api/v1/delegations",
-      undefined,
+      { signal: options?.signal },
       z.array(DelegationSchema)
     );
   }
