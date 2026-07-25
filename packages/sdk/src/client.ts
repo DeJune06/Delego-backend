@@ -1,6 +1,7 @@
 import type {
   ApiResponse,
   Delegation,
+  Escrow,
   HealthCheckResponse,
   Order,
 } from "@delego/types";
@@ -56,5 +57,9 @@ export class DelegoClient {
   // TODO: Implement order endpoints
   async getOrders(): Promise<ApiResponse<Order[]>> {
     return this.request<Order[]>("/api/v1/orders");
+  }
+
+  async getEscrows(): Promise<ApiResponse<Escrow[]>> {
+    return this.request<Escrow[]>("/api/v1/escrows");
   }
 }
