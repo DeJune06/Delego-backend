@@ -145,6 +145,36 @@ export class DelegoClient {
       z.array(OrderSchema)
     );
   }
+
+  async createDelegation(
+    input: import("@delego/types").CreateDelegationInput
+  ): Promise<ApiResponse<import("@delego/types").Delegation>> {
+    return this.request<import("@delego/types").Delegation>(
+      "/api/v1/delegations",
+      { method: "POST", body: JSON.stringify(input) },
+      DelegationSchema
+    );
+  }
+
+  async updateDelegation(
+    id: string,
+    input: import("@delego/types").UpdateDelegationInput
+  ): Promise<ApiResponse<import("@delego/types").Delegation>> {
+    return this.request<import("@delego/types").Delegation>(
+      `/api/v1/delegations/${encodeURIComponent(id)}`,
+      { method: "PATCH", body: JSON.stringify(input) },
+      DelegationSchema
+    );
+  }
+
+  async revokeDelegation(
+    id: string
+  ): Promise<ApiResponse<{ id: string; status: string }>> {
+    return this.request<{ id: string; status: string }>(
+      `/api/v1/delegations/${encodeURIComponent(id)}`,
+      { method: "DELETE" }
+    );
+  }
 }
 
 import { z } from "zod";
