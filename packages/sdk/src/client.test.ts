@@ -238,4 +238,127 @@ describe("DelegoClient", () => {
 
     expect(true).toBe(true);
   });
+
+  describe("token storage (#405)", () => {
+    function fakeStorage(): Storage {
+      const store = new Map<string, string>();
+      return {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => void store.set(key, value),
+        removeItem: (key: string) => void store.delete(key),
+        clear: () => store.clear(),
+        key: () => null,
+        get length() {
+          return store.size;
+        },
+      } as Storage;
+    }
+
+    it("setToken stores the token and getToken retrieves it", () => {
+      const client = new DelegoClient({
+        baseUrl: "http://localhost",
+        storage: fakeStorage(),
+      });
+
+      expect(client.getToken()).toBeNull();
+      client.setToken("abc123");
+      expect(client.getToken()).toBe("abc123");
+    });
+
+    it("persists the token across client instances via storage", () => {
+      const storage = fakeStorage();
+      const first = new DelegoClient({ baseUrl: "http://localhost", storage });
+      first.setToken("persisted-token");
+
+      const second = new DelegoClient({ baseUrl: "http://localhost", storage });
+      expect(second.getToken()).toBe("persisted-token");
+    });
+
+    it("includes the Authorization header once a token is set", async () => {
+      const client = new DelegoClient({
+        baseUrl: "http://localhost",
+        storage: fakeStorage(),
+      });
+      client.setToken("abc123");
+
+      const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ data: null, error: null }))
+      );
+
+      await client.health();
+
+      expect(spy).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: "Bearer abc123" }),
+        })
+      );
+    });
+
+    it("excludes the Authorization header when no token is set", async () => {
+      const client = new DelegoClient({
+        baseUrl: "http://localhost",
+        storage: fakeStorage(),
+      });
+
+      const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ data: null, error: null }))
+      );
+
+      await client.health();
+
+      const [, init] = spy.mock.calls[0] as [string, RequestInit];
+      expect((init.headers as Record<string, string>).Authorization).toBeUndefined();
+    });
+
+    it("clearToken removes the token from memory and storage", () => {
+      const storage = fakeStorage();
+      const client = new DelegoClient({ baseUrl: "http://localhost", storage });
+      client.setToken("abc123");
+
+      client.clearToken();
+
+      expect(client.getToken()).toBeNull();
+      expect(new DelegoClient({ baseUrl: "http://localhost", storage }).getToken()).toBeNull();
+    });
+
+    it("clears the token and calls onUnauthorized on a 401 response", async () => {
+      const storage = fakeStorage();
+      const onUnauthorized = vi.fn();
+      const client = new DelegoClient({
+        baseUrl: "http://localhost",
+        storage,
+        onUnauthorized,
+      });
+      client.setToken("abc123");
+
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ data: null, error: "unauthorized" }), {
+          status: 401,
+        })
+      );
+
+      await client.health();
+
+      expect(client.getToken()).toBeNull();
+      expect(onUnauthorized).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not call onUnauthorized on a successful response", async () => {
+      const onUnauthorized = vi.fn();
+      const client = new DelegoClient({
+        baseUrl: "http://localhost",
+        storage: fakeStorage(),
+        onUnauthorized,
+      });
+
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ data: null, error: null }))
+      );
+
+      await client.health();
+
+      expect(onUnauthorized).not.toHaveBeenCalled();
+    });
+  });
 });
