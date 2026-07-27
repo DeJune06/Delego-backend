@@ -361,4 +361,72 @@ describe("DelegoClient", () => {
       expect(onUnauthorized).not.toHaveBeenCalled();
     });
   });
+
+  describe("orders", () => {
+    const orderPayload = {
+      id: "order-1",
+      userId: "user-1",
+      delegationId: "del-1",
+      merchantId: "merchant-1",
+      status: "approved",
+      lineItems: [
+        { productId: "p1", quantity: 2, unitPriceStroops: 5000 },
+      ],
+      totalStroops: 10000,
+      escrowContractId: null,
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+    };
+
+    it("approveOrder() POSTs to the approve endpoint", async () => {
+      const client = new DelegoClient({ baseUrl: "http://localhost" });
+      const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ data: orderPayload, error: null }))
+      );
+
+      const res = await client.approveOrder("order-1");
+
+      expect(spy).toHaveBeenCalledWith(
+        "http://localhost/api/v1/orders/order-1/approve",
+        expect.objectContaining({ method: "POST" })
+      );
+      expect(res.data?.status).toBe("approved");
+    });
+
+    it("rejectOrder() POSTs the reason to the reject endpoint", async () => {
+      const client = new DelegoClient({ baseUrl: "http://localhost" });
+      const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            data: { ...orderPayload, status: "cancelled" },
+            error: null,
+          })
+        )
+      );
+
+      const res = await client.rejectOrder("order-1", "too expensive");
+
+      const init = spy.mock.calls[0][1] as RequestInit;
+      expect(spy).toHaveBeenCalledWith(
+        "http://localhost/api/v1/orders/order-1/reject",
+        expect.objectContaining({ method: "POST" })
+      );
+      expect(JSON.parse(init.body as string)).toEqual({ reason: "too expensive" });
+      expect(res.data?.status).toBe("cancelled");
+    });
+
+    it("encodes the order id in the path", async () => {
+      const client = new DelegoClient({ baseUrl: "http://localhost" });
+      const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ data: orderPayload, error: null }))
+      );
+
+      await client.approveOrder("a/b");
+
+      expect(spy).toHaveBeenCalledWith(
+        "http://localhost/api/v1/orders/a%2Fb/approve",
+        expect.anything()
+      );
+    });
+  });
 });
