@@ -14,7 +14,7 @@
  *  - Errors are logged-and-skipped: a single bad event never halts the cursor.
  */
 import { createLogger } from "@delego/utils";
-import { xdr, SorobanRpc } from "@stellar/stellar-sdk";
+import { xdr } from "@stellar/stellar-sdk";
 import { sendEmail } from "../email/index.js";
 import {
   sendPushNotification,
@@ -118,8 +118,6 @@ const TOPIC_TO_EVENT_TYPE: Readonly<Record<EscrowTopicName, EscrowEventType>> = 
   refunded: "escrow_refunded",
   disputed: "escrow_disputed",
 };
-
-const KNOWN_ESCROW_TOPICS: ReadonlySet<string> = new Set(Object.keys(TOPIC_TO_EVENT_TYPE));
 
 export function mapEscrowTopicToEventType(topicName: string): EscrowEventType | null {
   return TOPIC_TO_EVENT_TYPE[topicName as EscrowTopicName] ?? null;
@@ -338,8 +336,8 @@ async function dispatchEscrowNotification(
         deps.sendEmailFn({
           to: target.email,
           subject,
-          text: body,
           html: `<p>${body.replace(/\n/g, "<br>")}</p>`,
+          text: body,
         }).catch((err: unknown) =>
           log.error("Failed to send escrow email notification", {
             error: err instanceof Error ? err.message : String(err),
@@ -428,21 +426,22 @@ export function startEscrowEventListener(
 ): { stop(): Promise<void> } {
   const { createRequire } = require("node:module") as typeof import("node:module");
   const require_ = createRequire(import.meta.url);
-  const { SorobanRpc: SorobanRpcModule } = require_("@stellar/stellar-sdk") as typeof import("@stellar/stellar-sdk");
-  const server = new SorobanRpcModule.Server(rpcUrl, { allowHttp: rpcUrl.startsWith("http://") });
+  const { rpc } = require_("@stellar/stellar-sdk") as typeof import("@stellar/stellar-sdk");
+  const server = new rpc.Server(rpcUrl, { allowHttp: rpcUrl.startsWith("http://") });
 
   const Redis = (require_("ioredis") as { Redis: typeof import("ioredis").Redis }).Redis;
   const redisDefault = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", { lazyConnect: true });
 
   const dedupStore: ProcessedContractEventStore =
     depsIn.dedupStore ?? new InMemoryProcessedContractEventStore();
-  const redis: EscrowEventRedis = depsIn.redis ?? redisDefault;
+  const redis: EscrowEventRedis =
+    depsIn.redis ?? (redisDefault as unknown as EscrowEventRedis);
 
   const walletLookup =
     depsIn.walletLookup ??
     (() => {
       const adapter = getWalletLookupAdapter();
-      return (address: string) => adapter.lookupByStellarAddress(address);
+      return (address: string) => adapter.lookupByWalletAddress(address);
     })();
 
   const sendEmailFn = depsIn.sendEmailFn ?? sendEmail;
