@@ -1,5 +1,7 @@
 import type {
   ApiResponse,
+  Delegation,
+  Escrow,
   HealthCheckResponse,
 } from "@delego/types";
 import {
@@ -241,6 +243,10 @@ export class DelegoClient {
       `/api/v1/delegations/${encodeURIComponent(id)}`,
       { method: "DELETE" }
     );
+  }
+
+  async getEscrows(): Promise<ApiResponse<Escrow[]>> {
+    return this.request<Escrow[]>("/api/v1/escrows");
   }
 }
 
