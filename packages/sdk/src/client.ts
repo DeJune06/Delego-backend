@@ -182,11 +182,36 @@ export class DelegoClient {
     );
   }
 
-  async getOrders(): Promise<ApiResponse<import("@delego/types").Order[]>> {
+  async getOrders(
+    options?: { signal?: AbortSignal }
+  ): Promise<ApiResponse<import("@delego/types").Order[]>> {
     return this.request<import("@delego/types").Order[]>(
       "/api/v1/orders",
-      undefined,
+      { signal: options?.signal },
       z.array(OrderSchema)
+    );
+  }
+
+  /** Approve a high-value order awaiting manual review. */
+  async approveOrder(
+    id: string
+  ): Promise<ApiResponse<import("@delego/types").Order>> {
+    return this.request<import("@delego/types").Order>(
+      `/api/v1/orders/${encodeURIComponent(id)}/approve`,
+      { method: "POST" },
+      OrderSchema
+    );
+  }
+
+  /** Reject a high-value order awaiting manual review, with an optional reason. */
+  async rejectOrder(
+    id: string,
+    reason?: string
+  ): Promise<ApiResponse<import("@delego/types").Order>> {
+    return this.request<import("@delego/types").Order>(
+      `/api/v1/orders/${encodeURIComponent(id)}/reject`,
+      { method: "POST", body: JSON.stringify({ reason: reason ?? null }) },
+      OrderSchema
     );
   }
 
