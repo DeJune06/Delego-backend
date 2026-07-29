@@ -415,6 +415,51 @@ describe("DelegoClient", () => {
       expect(res.data?.status).toBe("cancelled");
     });
 
+    it("getOrder() GETs the order by id", async () => {
+      const client = new DelegoClient({ baseUrl: "http://localhost" });
+      const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ data: orderPayload, error: null }))
+      );
+
+      const res = await client.getOrder("order-1");
+
+      expect(spy).toHaveBeenCalledWith(
+        "http://localhost/api/v1/orders/order-1",
+        expect.anything()
+      );
+      expect(res.data?.id).toBe("order-1");
+    });
+
+    it("cancelOrder() POSTs to the cancel endpoint", async () => {
+      const client = new DelegoClient({ baseUrl: "http://localhost" });
+      const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ data: orderPayload, error: null }))
+      );
+
+      const res = await client.cancelOrder("order-1");
+
+      expect(spy).toHaveBeenCalledWith(
+        "http://localhost/api/v1/orders/order-1/cancel",
+        expect.objectContaining({ method: "POST" })
+      );
+      expect(res.data?.status).toBe("approved");
+    });
+
+    it("getOrderStatus() GETs the order status", async () => {
+      const client = new DelegoClient({ baseUrl: "http://localhost" });
+      const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ data: { status: "pending" }, error: null }))
+      );
+
+      const res = await client.getOrderStatus("order-1");
+
+      expect(spy).toHaveBeenCalledWith(
+        "http://localhost/api/v1/orders/order-1/status",
+        expect.anything()
+      );
+      expect(res.data?.status).toBe("pending");
+    });
+
     it("encodes the order id in the path", async () => {
       const client = new DelegoClient({ baseUrl: "http://localhost" });
       const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(

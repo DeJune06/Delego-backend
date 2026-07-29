@@ -49,9 +49,8 @@ function getCsrfToken(): string | undefined {
   return match?.[1];
 }
 
-/**
+  /**
  * HTTP client for the Delego API Gateway.
- * TODO: Implement full endpoint coverage as routes are added.
  */
 export class DelegoClient {
   private readonly baseUrl: string;
@@ -212,6 +211,37 @@ export class DelegoClient {
       `/api/v1/orders/${encodeURIComponent(id)}/reject`,
       { method: "POST", body: JSON.stringify({ reason: reason ?? null }) },
       OrderSchema
+    );
+  }
+
+  async getOrder(
+    id: string
+  ): Promise<ApiResponse<import("@delego/types").Order>> {
+    return this.request<import("@delego/types").Order>(
+      `/api/v1/orders/${encodeURIComponent(id)}`,
+      undefined,
+      OrderSchema
+    );
+  }
+
+  /** Cancel an order. */
+  async cancelOrder(
+    id: string
+  ): Promise<ApiResponse<import("@delego/types").Order>> {
+    return this.request<import("@delego/types").Order>(
+      `/api/v1/orders/${encodeURIComponent(id)}/cancel`,
+      { method: "POST" },
+      OrderSchema
+    );
+  }
+
+  /** Get the status of an order. */
+  async getOrderStatus(
+    id: string
+  ): Promise<ApiResponse<{ status: string }>> {
+    return this.request<{ status: string }>(
+      `/api/v1/orders/${encodeURIComponent(id)}/status`,
+      undefined
     );
   }
 
