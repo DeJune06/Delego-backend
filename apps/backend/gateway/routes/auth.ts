@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { generateId, json } from "@delego/utils";
 import * as authService from "../src/auth/authService.js";
+import * as oauthService from "../src/auth/oauthService.js";
 import {
   publishAuthAuditEvent,
   AUTH_AUDIT_ACTIONS,
@@ -9,6 +10,7 @@ import {
   validateSchema,
   RegisterSchema,
   LoginSchema,
+  OAuthCallbackSchema,
 } from "../src/validation.js";
 import {
   readJsonBody,
@@ -27,6 +29,9 @@ export const authDependencies = {
   loginUser: authService.loginUser,
   refreshAccessToken: authService.refreshAccessToken,
   logoutUser: authService.logoutUser,
+  handleOAuthCallback: oauthService.handleOAuthCallback,
+  buildAuthorizationUrl: oauthService.buildAuthorizationUrl,
+  validateProvider: oauthService.validateProvider,
 };
 
 function resolveRequestId(req: IncomingMessage): string {
@@ -270,4 +275,87 @@ export async function logoutHandler(
     data: { success: true },
     error: null,
   });
+}
+
+export async function oauthCallbackHandler(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  const requestId = resolveRequestId(req);
+
+  try {
+    const body = await readJsonBody(req);
+    const validation = validateSchema(OAuthCallbackSchema, body);
+    if (!validation.valid) {
+      publishAuthAuditEvent({
+        action: AUTH_AUDIT_ACTIONS.OAUTH_LOGIN,
+        success: false,
+        requestId,
+      });
+      badRequest(res, "Invalid request body", req, validation.errors);
+      return;
+    }
+
+    const { provider, code, state } = body;
+    const redirectUri = process.env.OAUTH_REDIRECT_URI ?? "";
+
+    const result = await authDependencies.handleOAuthCallback(provider, code, redirectUri);
+
+    publishAuthAuditEvent({
+      action: result.isNewUser ? AUTH_AUDIT_ACTIONS.OAUTH_REGISTER : AUTH_AUDIT_ACTIONS.OAUTH_LOGIN,
+      success: true,
+      requestId,
+      userId: result.user.id,
+      email: result.user.email,
+    });
+
+    setRefreshTokenCookie(res, result.refreshToken);
+    json(res, 200, {
+      data: {
+        user: result.user,
+        accessToken: result.accessToken,
+        expiresIn: result.expiresIn,
+        isNewUser: result.isNewUser,
+      },
+      error: null,
+    });
+  } catch (err: any) {
+    publishAuthAuditEvent({
+      action: AUTH_AUDIT_ACTIONS.OAUTH_LOGIN,
+      success: false,
+      requestId,
+    });
+    if (err instanceof InvalidJsonError || err instanceof BodyTooLargeError) {
+      badRequest(res, err.message, req);
+    } else {
+      sendApiError(res, 400, "OAUTH_ERROR", err.message, req);
+    }
+  }
+}
+
+export async function oauthAuthorizeHandler(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
+  const provider = url.searchParams.get("provider");
+  const redirectUri = url.searchParams.get("redirect_uri") ?? process.env.OAUTH_REDIRECT_URI ?? "";
+
+  if (!provider) {
+    sendApiError(res, 400, "VALIDATION_ERROR", "provider query parameter is required", req);
+    return;
+  }
+
+  try {
+    const validatedProvider = authDependencies.validateProvider(provider);
+    const state = generateId();
+    const authorizationUrl = authDependencies.buildAuthorizationUrl(validatedProvider, redirectUri, state);
+
+    json(res, 200, {
+      data: { authorizationUrl, state },
+      error: null,
+    });
+  } catch (err: any) {
+    sendApiError(res, 400, "INVALID_PROVIDER", err.message, req);
+  }
 }
