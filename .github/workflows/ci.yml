@@ -14,6 +14,7 @@ env:
   NODE_VERSION: 20
   NODE_ENV: test
   MOCK_REDIS: "true"
+  NEXT_PUBLIC_API_URL: "https://api.example.com"
 
 jobs:
   lint:
