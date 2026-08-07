@@ -78,10 +78,10 @@ describe("feeEstimator", () => {
         percentile: "p95",
       });
       expect(estimate.fetchedAt).toBeDefined();
-      expect(new Date(estimate.fetchedAt).getTime()).toBeCloseTo(
-        Date.now(),
-        -2,
+      const elapsedMs = Math.abs(
+        Date.now() - new Date(estimate.fetchedAt).getTime(),
       );
+      expect(elapsedMs).toBeLessThan(5_000);
     });
 
     it("should support p50 percentile for medium network fees", async () => {

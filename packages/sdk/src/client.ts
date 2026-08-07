@@ -1,9 +1,5 @@
-import type {
-  ApiResponse,
-  Delegation,
-  Escrow,
-  HealthCheckResponse,
-} from "@delego/types";
+import type { ApiResponse, Escrow, HealthCheckResponse } from "@delego/types";
+import { z } from "zod";
 import {
   ApiResponseSchema,
   DelegationSchema,
@@ -279,5 +275,3 @@ export class DelegoClient {
     return this.request<Escrow[]>("/api/v1/escrows");
   }
 }
-
-import { z } from "zod";

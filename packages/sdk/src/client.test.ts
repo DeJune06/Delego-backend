@@ -6,10 +6,21 @@ describe("DelegoClient", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.useFakeTimers();
+    Object.defineProperty(globalThis, "document", {
+      value: {},
+      configurable: true,
+      writable: true,
+    });
+    Object.defineProperty(globalThis.document, "cookie", {
+      get: () => "",
+      set: () => {},
+      configurable: true,
+    });
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    delete (globalThis as Record<string, unknown>).document;
   });
 
   it("constructs with baseUrl", () => {
@@ -177,7 +188,12 @@ describe("DelegoClient", () => {
       timeout: 1000,
     });
     vi.spyOn(globalThis, "fetch").mockImplementation(
-      () => new Promise(() => {})
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(new DOMException("The operation was aborted", "AbortError"))
+          );
+        })
     );
 
     const promise = client.health();
@@ -333,9 +349,13 @@ describe("DelegoClient", () => {
       client.setToken("abc123");
 
       vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify({ data: null, error: "unauthorized" }), {
-          status: 401,
-        })
+        new Response(
+          JSON.stringify({
+            data: null,
+            error: { code: "UNAUTHORIZED", message: "unauthorized" },
+          }),
+          { status: 401 }
+        )
       );
 
       await client.health();
