@@ -296,7 +296,7 @@ export async function oauthCallbackHandler(
       return;
     }
 
-    const { provider, code, state } = body;
+    const { provider, code } = body;
     const redirectUri = process.env.OAUTH_REDIRECT_URI ?? "";
 
     const result = await authDependencies.handleOAuthCallback(provider, code, redirectUri);

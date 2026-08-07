@@ -68,7 +68,8 @@ describe("Key Vault Encryption for Hot Wallet BIP-39 Seed Phrases", () => {
 
   it("should fail decryption if tag is invalid", () => {
     const encrypted = encryptSeedPhrase(seedPhrase, masterKey);
-    const corruptedTag = encrypted.authTag.substring(0, encrypted.authTag.length - 2) + "00";
+    const lastByte = parseInt(encrypted.authTag.slice(-2), 16);
+    const corruptedTag = encrypted.authTag.slice(0, -2) + (lastByte ^ 0x01).toString(16).padStart(2, "0");
     assert.throws(() => {
       decryptSeedPhrase(encrypted.ciphertext, encrypted.iv, corruptedTag, masterKey);
     });
@@ -76,7 +77,8 @@ describe("Key Vault Encryption for Hot Wallet BIP-39 Seed Phrases", () => {
 
   it("should fail decryption if IV is invalid", () => {
     const encrypted = encryptSeedPhrase(seedPhrase, masterKey);
-    const corruptedIv = encrypted.iv.substring(0, encrypted.iv.length - 2) + "00";
+    const lastByte = parseInt(encrypted.iv.slice(-2), 16);
+    const corruptedIv = encrypted.iv.slice(0, -2) + (lastByte ^ 0x01).toString(16).padStart(2, "0");
     assert.throws(() => {
       decryptSeedPhrase(encrypted.ciphertext, corruptedIv, encrypted.authTag, masterKey);
     });
