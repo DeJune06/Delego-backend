@@ -67,6 +67,17 @@ export const LoginSchema: any = {
   additionalProperties: false
 };
 
+export const OAuthCallbackSchema: any = {
+  type: "object",
+  properties: {
+    provider: { type: "string", enum: ["google", "github"] },
+    code: { type: "string", minLength: 1 },
+    state: { type: "string", minLength: 1 },
+  },
+  required: ["provider", "code", "state"],
+  additionalProperties: false,
+};
+
 export const CreateDelegationSchema: any = {
   type: "object",
   properties: {

@@ -23,6 +23,8 @@ export const AUTH_AUDIT_ACTIONS = {
   REGISTER: "register",
   LOGOUT: "logout",
   REFRESH: "refresh",
+  OAUTH_LOGIN: "oauth_login",
+  OAUTH_REGISTER: "oauth_register",
 } as const;
 
 /** In-memory sink for auth audit events — swap for Redis publish in production. */
