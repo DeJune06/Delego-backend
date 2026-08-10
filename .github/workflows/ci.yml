@@ -14,7 +14,6 @@ env:
   NODE_VERSION: 20
   NODE_ENV: test
   MOCK_REDIS: "true"
-  NEXT_PUBLIC_API_URL: "https://api.example.com"
 
 jobs:
   lint:
@@ -63,7 +62,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build shared packages and services
-        run: pnpm --filter "./packages/*" --filter "./apps/backend/*" --filter "./apps/frontend" --filter "./agents" build
+        run: pnpm --filter "./packages/*" --filter "./apps/backend/*" --filter "./agents" build
 
       - name: Run type check
         run: pnpm typecheck
@@ -91,7 +90,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build shared packages and services
-        run: pnpm --filter "./packages/*" --filter "./apps/backend/*" --filter "./apps/frontend" --filter "./agents" build
+        run: pnpm --filter "./packages/*" --filter "./apps/backend/*" --filter "./agents" build
 
       - name: Run tests
         run: pnpm test
@@ -119,34 +118,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build project
-        run: pnpm --filter "!@delego/contract-*" build
-
-  contracts:
-    name: Soroban Contracts
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-
-
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            contracts/target
-          key: cargo-${{ runner.os }}-${{ hashFiles('contracts/Cargo.lock') }}
-          restore-keys: |
-            cargo-${{ runner.os }}-
-
-      - name: Run contract tests
-        working-directory: contracts
-        run: cargo test --workspace
+        run: pnpm build
 
   docker:
     name: Docker Compose

@@ -24,7 +24,6 @@ Before you begin contributing, ensure you have the following installed:
 - **Node.js** >= 20.0.0
 - **pnpm** >= 9.0.0
 - **Docker** >= 24.0.0
-- **Rust** >= 1.70.0 (for contract development)
 - **Git** (for version control)
 
 ### Setup Instructions
@@ -221,22 +220,6 @@ pub fn escrow_funds(env: Env, amount: i128) {
 
 ## 🎯 Project Areas
 
-### Customer Web Application (`apps/frontend`)
-
-**Tech Stack:** Next.js, React, TypeScript, Tailwind CSS
-
-**Good First Issues:**
-- UI component improvements
-- React hooks development
-- Page layout enhancements
-- Form validation
-- State management
-
-**Key Files:**
-- `app/` - Next.js app directory
-- `components/` - React components
-- `hooks/` - Custom React hooks
-
 ### API Gateway (`apps/backend/gateway`)
 
 **Tech Stack:** Node.js, Express/Fastify, TypeScript
@@ -313,21 +296,6 @@ pub fn escrow_funds(env: Env, amount: i128) {
 - `settlement/` - Settlement logic
 - `events/` - Payment event handling
 
-### Smart Contracts (`contracts/`)
-
-**Tech Stack:** Rust, Soroban SDK
-
-**Good First Issues:**
-- Contract function implementation
-- Test coverage
-- Documentation
-- Gas optimization
-
-**Key Files:**
-- `escrow/src/` - Escrow contract
-- `permissions/src/` - Permissions contract
-- `tests/` - Contract tests
-
 ### Shared Packages (`packages/`)
 
 **Tech Stack:** TypeScript
@@ -336,13 +304,11 @@ pub fn escrow_funds(env: Env, amount: i128) {
 - Type definitions
 - Utility functions
 - SDK methods
-- UI components
 
 **Key Files:**
 - `types/src/` - Shared TypeScript types
 - `utils/src/` - Utility functions
 - `sdk/src/` - API client SDK
-- `ui/src/` - React components
 
 ## 🧪 Testing Guidelines
 

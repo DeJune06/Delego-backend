@@ -28,9 +28,9 @@ See [ARCHITECTURE.md](../../ARCHITECTURE.md) for the monorepo overview. This doc
 
 ### Presentation Layer
 
-**Components**: `apps/frontend`, `apps/merchant`, `apps/mobile`
+**Components**: The [Delego](https://github.com/DelegoLabs/Delego) web application (`apps/frontend`)
 
-The presentation layer handles user interaction and UI rendering.
+The presentation layer handles user interaction and UI rendering and lives in its own repository.
 
 #### Responsibilities
 

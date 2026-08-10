@@ -6,11 +6,11 @@ Delego implements a microservices architecture designed for AI-powered delegated
 
 ### Core Components
 
-- **Frontend**: Customer web application (`apps/frontend`)
+- **Frontend**: Customer web application — see the [Delego](https://github.com/DelegoLabs/Delego) repository
 - **Backend Services**: Gateway, orchestrator, wallet, payments, notifications (under `apps/backend/`)
 - **Agents**: AI agent runtime (`agents/`)
-- **Smart Contracts**: Soroban escrow and permissions contracts
-- **Shared Libraries**: UI components, SDK, types, utilities
+- **Smart Contracts**: Soroban escrow and permissions contracts — see the [Delego-contracts](https://github.com/DelegoLabs/Delego-contracts) repository
+- **Shared Libraries**: SDK, types, utilities (published from this repository)
 
 ### Design Principles
 
@@ -27,7 +27,7 @@ Delego implements a microservices architecture designed for AI-powered delegated
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         User Layer                              │
-│                  Web App (apps/frontend)                        │
+│          Web App (Delego repo — apps/frontend)                  │
 │              React/Next.js + Stellar Wallet                     │
 └────────────────────────────┬────────────────────────────────────┘
                              │

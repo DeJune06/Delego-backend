@@ -30,14 +30,15 @@ Delego/
 
 ### Key Directories
 
-- **apps/**: Applications (frontend, backend)
+- **apps/backend/**: Backend microservices (gateway, orchestrator, wallet, payments, notifications)
 - **agents/**: AI agent runtime and packages
-- **contracts/**: Soroban smart contracts
 - **database/**: Database schema, migrations, seed data
 - **docs/**: Project documentation
 - **infrastructure/**: Infrastructure as code
-- **packages/**: Shared libraries
+- **packages/**: Shared libraries (types, utils, sdk)
 - **tests/**: Test suites
+
+> **Note on repositories**: The Delego platform is split across three repositories. This repository contains the backend. The frontend web application lives in the [Delego](https://github.com/DelegoLabs/Delego) repository, and the Soroban smart contracts live in [Delego-contracts](https://github.com/DelegoLabs/Delego-contracts).
 
 ### Recommended Reading Order
 
@@ -55,7 +56,7 @@ Delego/
 - **pnpm**: >= 9.0.0
 - **Docker**: >= 24.0.0
 - **Docker Compose**: >= 2.20.0
-- **Rust**: >= 1.70.0 (for contract development)
+- **Rust**: >= 1.70.0 (only when developing against the contracts in [Delego-contracts](https://github.com/DelegoLabs/Delego-contracts))
 
 ### Installation Steps
 
@@ -127,26 +128,18 @@ grep -r "TODO:" --include="*.ts" --include="*.tsx" --include="*.rs"
 
 Based on your interests:
 
-#### For Frontend Developers
-
-- **apps/frontend/**: Customer web application
-- **packages/ui/**: Shared UI components
-- **packages/sdk/**: API client SDK
-
 #### For Backend Developers
 
 - **apps/backend/gateway/**: API gateway
 - **apps/backend/orchestrator/**: Workflow orchestration
 - **apps/backend/wallet/**: Wallet service
 
-#### For Smart Contract Developers
-
-- **contracts/escrow/**: Escrow contract
-- **contracts/permissions/**: Permissions contract
-
 #### For AI/ML Developers
 
 - **agents/**: AI agent runtime and packages
+
+> **Frontend developers**: see the [Delego](https://github.com/DelegoLabs/Delego) repository (web app + shared UI components).
+> **Smart contract developers**: see the [Delego-contracts](https://github.com/DelegoLabs/Delego-contracts) repository (escrow, permissions, delegation registry).
 
 ## Development Workflow
 
@@ -306,12 +299,7 @@ Before submitting a PR, ensure:
 
 ### Adding a New Smart Contract
 
-1. Create contract directory in `contracts/`
-2. Add Cargo.toml with contract configuration
-3. Implement contract with Soroban SDK
-4. Add tests for the contract
-5. Update contracts/README.md
-6. Document contract functions
+Smart contracts live in the [Delego-contracts](https://github.com/DelegoLabs/Delego-contracts) repository. Follow its [contributing guide](https://github.com/DelegoLabs/Delego-contracts#readme) to add new contracts. Backend services here interact with contracts via the Soroban RPC client in `apps/backend/wallet`.
 
 ### Adding a New Database Migration
 

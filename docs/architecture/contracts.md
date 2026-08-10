@@ -543,7 +543,7 @@ Track contract analytics:
 
 ## Documentation
 
-See [contracts/README.md](../../contracts/README.md) for detailed contract documentation including:
+See the [Delego-contracts](https://github.com/DelegoLabs/Delego-contracts) repository for the Soroban contracts and their [README](https://github.com/DelegoLabs/Delego-contracts#readme) including:
 
 - Contract implementation details
 - Development setup

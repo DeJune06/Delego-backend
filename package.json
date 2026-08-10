@@ -1,8 +1,8 @@
 {
-  "name": "delego",
+  "name": "delego-backend",
   "version": "0.0.1",
   "private": true,
-  "description": "AI commerce platform with Stellar/Soroban wallet, escrow, and agent delegation",
+  "description": "Backend microservices, agents, and shared SDK for the Delego AI commerce platform",
   "license": "MIT",
   "packageManager": "pnpm@9.15.0",
   "engines": {
@@ -11,15 +11,13 @@
   },
   "scripts": {
     "build": "pnpm -r build",
-    "dev": "pnpm --parallel -r --filter './apps/frontend' --filter './apps/backend/*' --filter './agents' dev",
-    "dev:web": "pnpm --filter @delego/web dev",
+    "dev": "pnpm --parallel -r --filter './apps/backend/*' --filter './agents' dev",
     "dev:gateway": "pnpm --filter @delego/gateway dev",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "test:unit": "pnpm --filter @delego/tests-unit test",
     "test:integration": "pnpm --filter @delego/tests-integration test",
-    "test:contracts": "pnpm --filter './contracts/*' test",
     "test:e2e": "pnpm --filter @delego/tests-e2e test",
     "db:migrate": "node scripts/setup/migrate.js",
     "db:seed": "node scripts/setup/seed.js",
