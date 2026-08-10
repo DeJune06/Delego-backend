@@ -6,7 +6,7 @@ This feature introduces a unified error normalization layer for Soroban smart co
 
 This feature replaces that pattern with a typed `ContractInvocationError` class and a `normalizeContractError` helper that maps raw wallet-service errors into structured, actionable instances.
 
-**Scope constraint:** All changes are limited to `apps/backend/payments/escrow/` and `apps/backend/payments/src/`. No changes to `@delego/types`, `@delego/utils`, `apps/backend/wallet/`, or any other service.
+**Scope constraint:** All changes are limited to `apps/backend/payments/escrow/` and `apps/backend/payments/src/`. No changes to `@delegolabs/types`, `@delegolabs/utils`, `apps/backend/wallet/`, or any other service.
 
 ## Glossary
 

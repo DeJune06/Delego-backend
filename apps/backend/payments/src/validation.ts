@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { createRequire } from "node:module";
-import { createLogger, parseBigIntString } from "@delego/utils";
+import { createLogger, parseBigIntString } from "@delegolabs/utils";
 import {
   getEscrowContractId,
   isValidContractId,

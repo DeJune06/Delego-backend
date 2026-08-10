@@ -6,7 +6,7 @@ Bounded-retry wrapper around Redis `PUBLISH` with structured logging.
 
 ```ts
 import { Redis, type Redis as RedisType } from "ioredis";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { RedisPublisher } from "./pubsub/index.js";
 
 const client = new Redis(REDIS_URL);

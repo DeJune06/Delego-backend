@@ -13,9 +13,9 @@ import {
   Address,
   Account
 } from "@stellar/stellar-sdk";
-import type { TransactionRequest, TransactionResult } from "@delego/types";
+import type { TransactionRequest, TransactionResult } from "@delegolabs/types";
 import { vaultService } from "../vault.js";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import {
   classifySubmissionFailure,
   type SubmissionFailure,

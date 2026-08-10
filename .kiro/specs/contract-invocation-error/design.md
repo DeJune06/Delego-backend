@@ -292,4 +292,4 @@ No new production dependencies.
 - `src/index.ts` — no modifications
 - `src/validation.ts` — no modifications
 - Any file outside `apps/backend/payments/` — no modifications
-- `@delego/types` — no modifications
+- `@delegolabs/types` — no modifications

@@ -1,7 +1,7 @@
 /**
- * @delego/notifications — Entry point
+ * @delegolabs/notifications — Entry point
  */
-import { createLogger, startHttpServer, route, json } from "@delego/utils";
+import { createLogger, startHttpServer, route, json } from "@delegolabs/utils";
 import { initWebSocketServer } from "./websocket.js";
 import {
   savePushSubscription,

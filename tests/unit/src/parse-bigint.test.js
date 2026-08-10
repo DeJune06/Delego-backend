@@ -1,6 +1,6 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { parseBigIntString } from "@delego/utils";
+import { parseBigIntString } from "@delegolabs/utils";
 
 describe("parseBigIntString", () => {
   it("parses valid non-negative integer strings", () => {

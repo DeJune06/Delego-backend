@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { parseIsoDate } from "@delego/utils";
+import { parseIsoDate } from "@delegolabs/utils";
 
 describe("parseIsoDate", () => {
   it("parses valid ISO-8601 date-time strings", () => {

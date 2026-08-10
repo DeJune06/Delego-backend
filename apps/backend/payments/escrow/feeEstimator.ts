@@ -1,5 +1,5 @@
 import { Horizon } from "@stellar/stellar-sdk";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 
 const log = createLogger(
   "payments:fee-estimator",

@@ -2,7 +2,7 @@
  * #55 Checkout Cancellation Grace Period Timers
  * Uses BullMQ to schedule 30-minute checkout expiry and cancel incomplete orders.
  */
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { Queue, Worker, type Job } from "bullmq";
 import { transitionWorkflow } from "../purchase/index.js";
 
@@ -110,7 +110,7 @@ export async function cancelTimeout(orderId: string): Promise<void> {
 }
 
 /** Checkout workflow — payment confirmation via the saga coordinator */
-import type { ApiResponse } from "@delego/types";
+import type { ApiResponse } from "@delegolabs/types";
 import { SagaCoordinator, type SagaStep } from "../../src/saga/index.js";
 import type { SagaRecord, SagaStore } from "../../src/saga/index.js";
 import {

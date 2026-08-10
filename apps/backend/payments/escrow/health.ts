@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 import { rpc as SorobanRpc } from "@stellar/stellar-sdk";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { getWalletUrl } from "./config.js";
 import { getEscrowCircuitBreaker, type CircuitBreakerStats } from "./circuitBreaker.js";
 

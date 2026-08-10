@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { generateId } from "@delego/utils";
+import { generateId } from "@delegolabs/utils";
 
 export interface RequestContext {
   requestId: string;

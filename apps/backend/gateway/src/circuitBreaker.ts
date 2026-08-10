@@ -11,7 +11,7 @@
  *   through to probe recovery
  */
 
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 
 const log = createLogger("gateway:circuit-breaker", process.env.LOG_LEVEL ?? "info");
 

@@ -18,7 +18,7 @@ This repository contains the backend platform for Delego: the API gateway, orche
 
 | Repository | Purpose |
 |---|---|
-| [Delego](https://github.com/DelegoLabs/Delego) | Frontend web application (`apps/frontend`), depends on the published `@delego/sdk` and `@delego/types` |
+| [Delego](https://github.com/DelegoLabs/Delego) | Frontend web application (`apps/frontend`), depends on the published `@delegolabs/sdk` and `@delegolabs/types` |
 | [Delego-backend](https://github.com/DelegoLabs/Delego-backend) | **This repo** — microservices, agents, shared packages, SDK |
 | [Delego-contracts](https://github.com/DelegoLabs/Delego-contracts) | Soroban smart contracts |
 
@@ -36,11 +36,11 @@ Delego (web) ──> API Gateway ──> Orchestrator / Wallet / Payments / Noti
 
 | Service | Package | Port | Responsibility |
 |---|---|---|---|
-| Gateway | `@delego/gateway` | 3000 | Single API entry point: auth (JWT), RBAC, rate limiting, routing |
-| Orchestrator | `@delego/orchestrator` | 3010 | Purchase workflow coordination and state machine |
-| Wallet | `@delego/wallet` | 3012 | Stellar accounts, Soroban permissions, tx signing/submission |
-| Payments | `@delego/payments` | 3014 | Escrow coordination, settlements, refunds |
-| Notifications | `@delego/notifications` | 3015 | Email/push notifications with retry (DLQ) |
+| Gateway | `@delegolabs/gateway` | 3000 | Single API entry point: auth (JWT), RBAC, rate limiting, routing |
+| Orchestrator | `@delegolabs/orchestrator` | 3010 | Purchase workflow coordination and state machine |
+| Wallet | `@delegolabs/wallet` | 3012 | Stellar accounts, Soroban permissions, tx signing/submission |
+| Payments | `@delegolabs/payments` | 3014 | Escrow coordination, settlements, refunds |
+| Notifications | `@delegolabs/notifications` | 3015 | Email/push notifications with retry (DLQ) |
 
 Each service is independently deployable and exposes `GET /health`.
 
@@ -53,11 +53,21 @@ Each service is independently deployable and exposes `GET /health`.
 
 | Package | Purpose | Published |
 |---|---|---|
-| `@delego/types` | Shared domain types and interfaces | Yes — consumed by the frontend |
-| `@delego/utils` | Shared utilities | Yes |
-| `@delego/sdk` | TypeScript client SDK for the Delego API | Yes — consumed by the frontend |
+| `@delegolabs/types` | Shared domain types and interfaces | Yes — GitHub Packages |
+| `@delegolabs/utils` | Shared utilities | Yes — GitHub Packages |
+| `@delegolabs/sdk` | TypeScript client SDK for the Delego API | Yes — GitHub Packages |
 
-These packages are versioned and published to the package registry so the frontend repository can consume them without a monorepo dependency.
+These packages are built and published to **GitHub Packages** (`npm.pkg.github.com`) under the `@delegolabs` scope (matching the DelegoLabs org), so the frontend repository can consume them without a monorepo dependency.
+
+**Publishing:** push a `v*` tag (or trigger the `Publish Packages` workflow manually). The [`publish.yml`](./.github/workflows/publish.yml) workflow builds and publishes all three packages.
+
+**Consuming:** add the following to your project's `.npmrc` and install from GitHub Packages (authenticate with a GitHub PAT that has `read:packages`):
+
+```ini
+@delegolabs:registry=https://npm.pkg.github.com
+```
+
+See [Working with the npm registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry) for auth setup.
 
 ### Data & Infra
 
@@ -88,7 +98,7 @@ pnpm dev              # run all services and agents
 
 ```bash
 pnpm dev:gateway
-pnpm --filter @delego/wallet dev
+pnpm --filter @delegolabs/wallet dev
 ```
 
 ### Building

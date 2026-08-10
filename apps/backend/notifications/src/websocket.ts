@@ -4,7 +4,7 @@ import WebSocket, { WebSocketServer } from "ws";
 import { Redis } from "ioredis";
 import { randomUUID } from "node:crypto";
 import jwt from "jsonwebtoken";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 
 const SERVICE_NAME = "notifications";
 const log = createLogger(SERVICE_NAME, process.env.LOG_LEVEL ?? "info");

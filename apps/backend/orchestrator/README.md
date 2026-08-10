@@ -1,11 +1,11 @@
-# @delego/orchestrator
+# @delegolabs/orchestrator
 
 Delego **orchestrator** service.
 
 ## Development
 
 ```bash
-pnpm --filter @delego/orchestrator dev
+pnpm --filter @delegolabs/orchestrator dev
 ```
 
 Health check: `GET http://localhost:3010/health`

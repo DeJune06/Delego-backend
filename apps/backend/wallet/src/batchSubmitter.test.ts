@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { Keypair, Address } from "@stellar/stellar-sdk";
-import type { TransactionRequest } from "@delego/types";
+import type { TransactionRequest } from "@delegolabs/types";
 import { submitTransactionBatch, estimateBatchGas } from "./batchSubmitter.js";
 
 describe("batchSubmitter (Issue #342)", () => {

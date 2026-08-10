@@ -1,5 +1,5 @@
 {
-  "name": "@delego/orchestrator",
+  "name": "@delegolabs/orchestrator",
   "version": "0.0.1",
   "private": true,
   "description": "Delego orchestrator service",
@@ -14,8 +14,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@delego/types": "workspace:*",
-    "@delego/utils": "workspace:*",
+    "@delegolabs/types": "workspace:*",
+    "@delegolabs/utils": "workspace:*",
     "bullmq": "^5.78.1",
     "ioredis": "^5.11.1",
     "pg": "^8.21.0",

@@ -825,7 +825,7 @@ X-Delego-Signature: sha256=signature_here
 ### JavaScript/TypeScript SDK
 
 ```typescript
-import { DelegoClient } from "@delego/sdk";
+import { DelegoClient } from "@delegolabs/sdk";
 
 const client = new DelegoClient({
   apiKey: "your-api-key",

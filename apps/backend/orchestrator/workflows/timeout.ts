@@ -19,7 +19,7 @@
  * is a coarser, wall-clock signal that is unaffected by lease churn.
  */
 
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import type { SagaRecord, SagaStore } from "../src/saga/types.js";
 
 const log = createLogger("orchestrator:timeout", process.env.LOG_LEVEL ?? "info");

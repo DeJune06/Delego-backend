@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { json, generateId } from "@delego/utils";
+import { json, generateId } from "@delegolabs/utils";
 import { getRequestContext } from "../middleware/requestId.js";
 
 /** Issue #109 — Standard API error envelope with request metadata. */

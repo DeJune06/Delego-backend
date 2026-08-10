@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Mock the logger first
-vi.mock("@delego/utils", () => ({
+vi.mock("@delegolabs/utils", () => ({
   createLogger: () => ({
     debug: vi.fn(),
     info: vi.fn(),

@@ -1,4 +1,4 @@
-import type { AgentDefinition } from "@delego/types";
+import type { AgentDefinition } from "@delegolabs/types";
 
 export const paymentAgentDefinition: AgentDefinition = {
   id: "payment-agent",

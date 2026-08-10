@@ -1,4 +1,4 @@
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 
 const log = createLogger("gateway:auth:audit", process.env.LOG_LEVEL ?? "info");
 

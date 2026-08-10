@@ -3,7 +3,7 @@
  */
 
 import { createRequire } from "node:module";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 
 const log = createLogger("payments:escrow-coordinator:events", process.env.LOG_LEVEL ?? "info");
 

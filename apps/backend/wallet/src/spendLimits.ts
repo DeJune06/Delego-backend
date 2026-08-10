@@ -1,6 +1,6 @@
 import { getRedisConnection } from "./queue/txQueue.js";
 import { SpendLimit } from "./models/SpendLimit.js";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 
 const log = createLogger("wallet:spendLimits", process.env.LOG_LEVEL ?? "info");
 

@@ -1,9 +1,9 @@
 /**
- * @delego/wallet — Entry point
+ * @delegolabs/wallet — Entry point
  * TODO: Implement service logic
  */
-import { createLogger } from "@delego/utils";
-import { startHttpServer } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
+import { startHttpServer } from "@delegolabs/utils";
 import { SorobanTransactionSimulator, readSorobanRpcConfig } from "./sorobanSimulator.js";
 
 const SERVICE_NAME = "wallet";

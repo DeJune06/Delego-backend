@@ -7,7 +7,7 @@
  * - Retention-based cleanup of old events
  */
 
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import type { PurchaseEvent, PurchaseState, PurchaseContext, WorkflowSnapshot } from "../../state/types.js";
 import { PurchaseWorkflowMachine } from "../../state/machine.js";
 

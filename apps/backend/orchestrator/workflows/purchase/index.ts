@@ -2,8 +2,8 @@
  * #19 Purchase Workflow State Machine
  * XState-style state machine with PostgreSQL persistence and Redis Pub/Sub.
  */
-import { createLogger } from "@delego/utils";
-import { generateId } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
+import { generateId } from "@delegolabs/utils";
 import { Redis } from "ioredis";
 import { Pool } from "pg";
 

@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { Keypair } from "@stellar/stellar-sdk";
-import * as Utils from "@delego/utils";
+import * as Utils from "@delegolabs/utils";
 
 const validKeypair = Keypair.random();
 const VALID_PUBLIC_KEY = validKeypair.publicKey();

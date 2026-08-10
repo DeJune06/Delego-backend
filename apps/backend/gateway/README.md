@@ -1,11 +1,11 @@
-# @delego/gateway
+# @delegolabs/gateway
 
 Delego **gateway** service.
 
 ## Development
 
 ```bash
-pnpm --filter @delego/gateway dev
+pnpm --filter @delegolabs/gateway dev
 ```
 Health check: `GET http://localhost:3000/health`
 

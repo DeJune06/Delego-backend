@@ -8,7 +8,7 @@
  * - HALF_OPEN: after recovery timeout, allows a single test request
  */
 
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 
 const log = createLogger("payments:escrow:circuit-breaker", process.env.LOG_LEVEL ?? "info");
 

@@ -1,4 +1,4 @@
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { getTokenRegistry, type TokenPrice } from "./tokenRegistry.js";
 
 const log = createLogger(

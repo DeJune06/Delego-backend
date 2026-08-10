@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { RedisPublisher } from "./publisher.js";
 import type { RedisClient } from "./types.js";
-import type { Logger } from "@delego/utils";
+import type { Logger } from "@delegolabs/utils";
 
 function noopLogger(): Logger {
   return { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };

@@ -1,5 +1,5 @@
 // Issue #130 — Workflow event correlation and publishing
-import { generateId } from "@delego/utils";
+import { generateId } from "@delegolabs/utils";
 
 export interface WorkflowEventEnvelope<T = Record<string, unknown>> {
   correlationId: string;

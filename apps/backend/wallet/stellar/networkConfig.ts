@@ -1,5 +1,5 @@
 import { Networks } from "@stellar/stellar-sdk";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 
 const log = createLogger("wallet:networkConfig", process.env.LOG_LEVEL ?? "info");
 

@@ -1,4 +1,4 @@
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { getEscrowContractId } from "./config.js";
 import { submitContractCall } from "./wallet-client.js";
 import { getEscrowCircuitBreaker } from "./circuitBreaker.js";

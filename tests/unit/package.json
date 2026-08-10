@@ -1,5 +1,5 @@
 {
-  "name": "@delego/tests-unit",
+  "name": "@delegolabs/tests-unit",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -8,7 +8,7 @@
     "typecheck": "echo 'N/A'"
   },
   "dependencies": {
-    "@delego/utils": "workspace:*"
+    "@delegolabs/utils": "workspace:*"
   },
   "devDependencies": {
     "@stellar/stellar-sdk": "^15.1.0",

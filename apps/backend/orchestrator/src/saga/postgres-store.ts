@@ -1,5 +1,5 @@
 import { DataTypes, Model, Op, Sequelize } from "sequelize";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { SagaConcurrencyError, type SagaRecord, type SagaStatus, type SagaStore } from "./types.js";
 
 const log = createLogger("orchestrator:saga:store", process.env.LOG_LEVEL ?? "info");

@@ -22,7 +22,7 @@ for entry in "${SERVICES[@]}"; do
 
   cat > "$dir/package.json" <<EOF
 {
-  "name": "@delego/$name",
+  "name": "@delegolabs/$name",
   "version": "0.0.1",
   "private": true,
   "description": "Delego $name service",
@@ -37,9 +37,9 @@ for entry in "${SERVICES[@]}"; do
     "test": "echo 'No tests yet'"
   },
   "dependencies": {
-    "@delego/config": "workspace:*",
-    "@delego/types": "workspace:*",
-    "@delego/utils": "workspace:*"
+    "@delegolabs/config": "workspace:*",
+    "@delegolabs/types": "workspace:*",
+    "@delegolabs/utils": "workspace:*"
   },
   "devDependencies": {
     "tsx": "^4.19.0",
@@ -68,12 +68,12 @@ EOF
 
   cat > "$dir/src/index.ts" <<EOF
 /**
- * @delego/$name — Entry point
+ * @delegolabs/$name — Entry point
  * TODO: Implement service logic
  */
-import { loadEnv } from "@delego/config";
-import { createLogger } from "@delego/utils";
-import { startHttpServer } from "@delego/utils";
+import { loadEnv } from "@delegolabs/config";
+import { createLogger } from "@delegolabs/utils";
+import { startHttpServer } from "@delegolabs/utils";
 
 const SERVICE_NAME = "$name";
 const DEFAULT_PORT = $port;
@@ -94,14 +94,14 @@ startHttpServer({
 EOF
 
   cat > "$dir/README.md" <<EOF
-# @delego/$name
+# @delegolabs/$name
 
 Delego **$name** service.
 
 ## Development
 
 \`\`\`bash
-pnpm --filter @delego/$name dev
+pnpm --filter @delegolabs/$name dev
 \`\`\`
 
 Health check: \`GET http://localhost:$port/health\`

@@ -1,5 +1,5 @@
-import type { RouteHandler } from "@delego/utils";
-import { json } from "@delego/utils";
+import type { RouteHandler } from "@delegolabs/utils";
+import { json } from "@delegolabs/utils";
 import { getRedisHealth } from "../src/rateLimit/redisClient.js";
 import { checkDatabaseHealth } from "../src/db.js";
 

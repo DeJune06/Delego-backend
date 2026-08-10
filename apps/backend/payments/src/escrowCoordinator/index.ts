@@ -1,4 +1,4 @@
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import {
   extractEscrowIdFromTx,
   getContractReadSourceAddress,

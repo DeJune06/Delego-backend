@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { stroopsToDisplay, displayToStroops } from "@delego/utils";
+import { stroopsToDisplay, displayToStroops } from "@delegolabs/utils";
 
 describe("currency", () => {
   it("converts stroops to display", () => {

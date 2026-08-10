@@ -10,7 +10,7 @@
 
 ## Testing
 
-- `pnpm --filter @delego/payments --filter @delego/gateway --filter @delego/notifications --filter @delego/wallet test` — all new and existing unit tests pass (286 tests across the four packages).
+- `pnpm --filter @delegolabs/payments --filter @delegolabs/gateway --filter @delegolabs/notifications --filter @delegolabs/wallet test` — all new and existing unit tests pass (286 tests across the four packages).
 - Typecheck run per package; two pre-existing unused-import errors (`payments/escrow/index.ts`, `gateway/src/swagger.ts`, `wallet/stellar/recovery.ts`) and one pre-existing broken test import (`wallet/stellar/recovery.test.ts`) predate this branch and were left untouched.
 
 Closes #363

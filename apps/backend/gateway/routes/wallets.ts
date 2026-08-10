@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { json } from "@delego/utils";
+import { json } from "@delegolabs/utils";
 import { extractAuth } from "../middleware/auth.js";
 import { requireWalletOwnership } from "../middleware/walletOwnership.js";
 import { Wallet } from "../src/models/index.js";

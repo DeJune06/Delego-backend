@@ -9,7 +9,7 @@
  * already been settled.
  */
 
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { escrowCoordinator } from "../src/escrowCoordinator/index.js";
 import type { ReleaseResult } from "../src/escrowCoordinator/types.js";
 

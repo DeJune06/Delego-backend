@@ -1,4 +1,4 @@
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { randomUUID } from "crypto";
 
 const log = createLogger("notifications:deliveryTracker", process.env.LOG_LEVEL ?? "info");

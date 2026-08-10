@@ -3,7 +3,7 @@
  * Periodically compares payment_records against canonical on-chain escrow
  * state to catch discrepancies caused by missed or dropped contract events.
  */
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { Pool } from "pg";
 import {
   getContractReadSourceAddress,

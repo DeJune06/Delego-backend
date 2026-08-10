@@ -13,7 +13,7 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { json } from "@delego/utils";
+import { json } from "@delegolabs/utils";
 import { extractAuth, getAuthenticatedUserContext } from "../middleware/auth.js";
 import { sendApiError, forbidden, unauthorized } from "../src/errors.js";
 import { aggregateRateLimitAnalytics } from "../src/rateLimit/analytics.js";

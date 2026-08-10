@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import type { RouteHandler } from "@delego/utils";
-import { json } from "@delego/utils";
+import type { RouteHandler } from "@delegolabs/utils";
+import { json } from "@delegolabs/utils";
 import { internalError, payloadTooLarge } from "../src/errors.js";
 
 /**

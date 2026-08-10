@@ -1,4 +1,4 @@
-# @delego/utils
+# @delegolabs/utils
 
 Shared utilities: logging, currency conversion, ID generation, and API boundary parsers.
 

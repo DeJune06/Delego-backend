@@ -3,7 +3,7 @@
  * Allows account recovery through guardian signatures (M-of-N threshold).
  * Time-locked with cancellation window for security.
  */
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { Pool } from "pg";
 
 const log = createLogger("wallet:social-recovery", process.env.LOG_LEVEL ?? "info");

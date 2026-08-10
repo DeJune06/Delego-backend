@@ -1,13 +1,13 @@
 import type { IncomingMessage } from "node:http";
-import { route, json, isValidStellarPublicKey, validatePublicKeyMiddleware, type Route } from "@delego/utils";
+import { route, json, isValidStellarPublicKey, validatePublicKeyMiddleware, type Route } from "@delegolabs/utils";
 import { accountService } from "../stellar/account.js";
 import { mergeAccount, previewMerge } from "../stellar/recovery.js";
 import { transactionService } from "../transactions/index.js";
 import { vaultService } from "./vault.js";
-import type { StellarNetwork } from "@delego/types";
+import type { StellarNetwork } from "@delegolabs/types";
 import { Asset, Networks, Horizon, TransactionBuilder, Transaction } from "@stellar/stellar-sdk";
 import { getRedisConnection, getJobStatus } from "./queue/txQueue.js";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 
 const log = createLogger("wallet:routes", process.env.LOG_LEVEL ?? "info");
 

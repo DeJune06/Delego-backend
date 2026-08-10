@@ -1,9 +1,9 @@
-# @delego/sdk
+# @delegolabs/sdk
 
 TypeScript client for the Delego API. Used by web, merchant, and mobile apps.
 
 ```typescript
-import { DelegoClient } from "@delego/sdk";
+import { DelegoClient } from "@delegolabs/sdk";
 
 const client = new DelegoClient({
   baseUrl: process.env.NEXT_PUBLIC_API_URL!,

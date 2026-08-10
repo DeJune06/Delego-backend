@@ -1,9 +1,9 @@
 /**
- * @delego/agents — Entry point
+ * @delegolabs/agents — Entry point
  * Issues #8, #9: LLM runtimes and tool registry exported from this package.
  */
-import { createLogger } from "@delego/utils";
-import { startHttpServer } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
+import { startHttpServer } from "@delegolabs/utils";
 
 // Issue #9: LLM client runtimes
 export { OpenAIClient, AnthropicClient } from "./llm/index.js";

@@ -1,4 +1,4 @@
-import type { AgentDefinition, AgentRunContext, AgentRunResult } from "@delego/types";
+import type { AgentDefinition, AgentRunContext, AgentRunResult } from "@delegolabs/types";
 
 export const buyerAgentDefinition: AgentDefinition = {
   id: "buyer-agent",

@@ -1,5 +1,5 @@
-import type { Route } from "@delego/utils";
-import { route } from "@delego/utils";
+import type { Route } from "@delegolabs/utils";
+import { route } from "@delegolabs/utils";
 import { healthHandler } from "./health.js";
 import { apiV1Handler } from "./api-v1.js";
 import {

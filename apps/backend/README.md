@@ -34,7 +34,7 @@ The backend services directory contains microservices that implement the core bu
 
 ### Gateway Service (`apps/backend/gateway`)
 
-**Package**: `@delego/gateway`
+**Package**: `@delegolabs/gateway`
 **Port**: 3000
 **Health Check**: `GET /health`
 
@@ -71,7 +71,7 @@ The API gateway serves as the single entry point for all client requests.
 
 ### Orchestrator Service (`apps/backend/orchestrator`)
 
-**Package**: `@delego/orchestrator`
+**Package**: `@delegolabs/orchestrator`
 **Port**: 3010
 **Health Check**: `GET /health`
 
@@ -110,7 +110,7 @@ The orchestrator service coordinates purchase workflows across multiple services
 
 ### Wallet Service (`apps/backend/wallet`)
 
-**Package**: `@delego/wallet`
+**Package**: `@delegolabs/wallet`
 **Port**: 3012
 **Health Check**: `GET /health`
 
@@ -142,7 +142,7 @@ The wallet service manages Stellar wallets and Soroban permissions.
 
 ### Payments Service (`apps/backend/payments`)
 
-**Package**: `@delego/payments`
+**Package**: `@delegolabs/payments`
 **Port**: 3014
 **Health Check**: `GET /health`
 
@@ -176,7 +176,7 @@ The payments service coordinates payment and escrow operations.
 
 ### Notifications Service (`apps/backend/notifications`)
 
-**Package**: `@delego/notifications`
+**Package**: `@delegolabs/notifications`
 **Port**: 3015
 **Health Check**: `GET /health`
 
@@ -295,7 +295,7 @@ pnpm dev:notifications
 pnpm build
 
 # Build specific service
-pnpm --filter @delego/gateway build
+pnpm --filter @delegolabs/gateway build
 ```
 
 ### Testing Services
@@ -305,7 +305,7 @@ pnpm --filter @delego/gateway build
 pnpm test
 
 # Test specific service
-pnpm --filter @delego/gateway test
+pnpm --filter @delegolabs/gateway test
 ```
 
 ## Service Communication

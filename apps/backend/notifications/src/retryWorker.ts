@@ -1,4 +1,4 @@
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { PushDeliveryTracker, PushDeliveryRecord, defaultPushDeliveryTracker } from "./deliveryTracker.js";
 
 const log = createLogger("notifications:retryWorker", process.env.LOG_LEVEL ?? "info");

@@ -13,7 +13,7 @@ import {
 } from "./workflowVersioning.js";
 
 // Mock the logger
-vi.mock("@delego/utils", () => ({
+vi.mock("@delegolabs/utils", () => ({
     createLogger: () => ({
         info: vi.fn(),
         warn: vi.fn(),

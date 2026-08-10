@@ -1,4 +1,4 @@
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { escrowService } from "../escrow/index.js";
 import { getTransactionFeeEstimate } from "../escrow/wallet-client.js";
 import { publishPaymentEvent } from "../events/index.js";

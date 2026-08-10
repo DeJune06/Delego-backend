@@ -9,7 +9,7 @@
 import { Redis } from "ioredis";
 // @ts-ignore
 import MockRedis from "ioredis-mock";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 
 const log = createLogger("gateway:redis", process.env.LOG_LEVEL ?? "info");
 

@@ -1,10 +1,16 @@
 {
-  "name": "@delego/utils",
+  "name": "@delegolabs/utils",
   "version": "0.0.1",
-  "private": true,
   "description": "Shared utility functions",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DelegoLabs/Delego-backend.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

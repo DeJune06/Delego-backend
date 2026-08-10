@@ -8,9 +8,9 @@ import type {
   AgentDefinition,
   ApiResponse,
   HealthCheckResponse,
-} from "@delego/types";
+} from "@delegolabs/types";
 
-describe("@delego/types", () => {
+describe("@delegolabs/types", () => {
   it("exports User interface", () => {
     const user: User = {
       id: "u1",

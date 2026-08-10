@@ -7,9 +7,9 @@
  */
 
 import { Keypair, Horizon, TransactionBuilder, Operation, Networks } from "@stellar/stellar-sdk";
-import type { StellarNetwork } from "@delego/types";
+import type { StellarNetwork } from "@delegolabs/types";
 import { vaultService } from "../src/vault.js";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { normalizeStellarAddress } from "../src/normalizeStellarAddress.js";
 
 const log = createLogger("wallet:stellar:recovery", process.env.LOG_LEVEL ?? "info");

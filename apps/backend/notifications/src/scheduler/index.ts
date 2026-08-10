@@ -7,7 +7,7 @@
  * due notifications; the store is swappable for a DB-backed implementation.
  */
 
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { getNextCronOccurrence, isValidCronExpression } from "./cron.js";
 import {
   InMemoryScheduledNotificationStore,

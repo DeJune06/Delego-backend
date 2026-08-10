@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { Op } from "sequelize";
-import { json } from "@delego/utils";
+import { json } from "@delegolabs/utils";
 import { extractAuth } from "../middleware/auth.js";
 import { checkDelegationOwnership } from "../middleware/delegationOwnership.js";
 import { validateSchema, CreateDelegationSchema, UpdateDelegationSchema } from "../src/validation.js";

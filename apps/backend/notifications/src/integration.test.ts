@@ -19,7 +19,7 @@ vi.mock("./idempotency.js", () => ({
 vi.mock("../push/index.js", () => ({
   sendPushNotification: vi.fn().mockResolvedValue(undefined),
 }));
-vi.mock("@delego/utils", () => ({
+vi.mock("@delegolabs/utils", () => ({
   createLogger: () => ({
     debug: vi.fn(),
     info: vi.fn(),

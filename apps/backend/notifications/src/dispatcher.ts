@@ -1,5 +1,5 @@
 import { Redis } from "ioredis";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { randomUUID } from "crypto";
 import {
   sendEmailWithRetry,

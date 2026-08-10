@@ -6,7 +6,7 @@
  * fast instead of piling up timed-out requests at the gateway.
  */
 
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { CircuitBreakerOpenError, getCircuitBreaker, type DownstreamService } from "./circuitBreaker.js";
 
 const log = createLogger("gateway:service-client", process.env.LOG_LEVEL ?? "info");

@@ -1,11 +1,11 @@
-# @delego/wallet
+# @delegolabs/wallet
 
 Delego **wallet** service.
 
 ## Development
 
 ```bash
-pnpm --filter @delego/wallet dev
+pnpm --filter @delegolabs/wallet dev
 ```
 
 Health check: `GET http://localhost:3012/health`
@@ -47,7 +47,7 @@ const reservation = await reserveSequenceBlock(
 No additional environment variables are required. Uses existing Redis configuration.
 ## Public Key Validation
 
-This service uses `@delego/utils` to validate Stellar public keys at route boundaries, and
+This service uses `@delegolabs/utils` to validate Stellar public keys at route boundaries, and
 `normalizeStellarAddress` in `src/normalizeStellarAddress.ts` before account lookups and persistence.
 
 | Export | Purpose |

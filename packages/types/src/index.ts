@@ -1,5 +1,5 @@
 /**
- * @delego/types — Shared domain types
+ * @delegolabs/types — Shared domain types
  * All services and apps should import from this package.
  */
 

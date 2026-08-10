@@ -7,8 +7,8 @@ import {
   nativeToScVal,
   Address,
 } from "@stellar/stellar-sdk";
-import type { TransactionRequest, TransactionResult } from "@delego/types";
-import { createLogger } from "@delego/utils";
+import type { TransactionRequest, TransactionResult } from "@delegolabs/types";
+import { createLogger } from "@delegolabs/utils";
 import { addTransactionToQueue } from "../src/queue/txQueue.js";
 
 const log = createLogger("wallet:transactions", process.env.LOG_LEVEL ?? "info");

@@ -34,7 +34,7 @@ export interface FundEscrowRequest {
 }
 ```
 
-All fields are `string`. `amountStroops` is intentionally a string (not `bigint` or `number`) to match the existing `TransactionRequest.amountStroops: string` pattern in `@delego/types` and to avoid precision loss at the boundary.
+All fields are `string`. `amountStroops` is intentionally a string (not `bigint` or `number`) to match the existing `TransactionRequest.amountStroops: string` pattern in `@delegolabs/types` and to avoid precision loss at the boundary.
 
 ---
 

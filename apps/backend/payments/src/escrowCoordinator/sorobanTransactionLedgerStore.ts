@@ -1,5 +1,5 @@
 import { Pool, type QueryResultRow } from "pg";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 
 const log = createLogger(
   "payments:soroban-ledger:store",

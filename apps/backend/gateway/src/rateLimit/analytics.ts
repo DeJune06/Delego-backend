@@ -12,7 +12,7 @@
  */
 
 import { getRedisClient } from "./redisClient.js";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 
 const log = createLogger("gateway:rateLimit:analytics", process.env.LOG_LEVEL ?? "info");
 

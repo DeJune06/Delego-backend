@@ -20,7 +20,7 @@
  *   decide on retry strategy.
  */
 
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import {
   insertWorkflowTransitionAudit,
 } from "../../state/workflow-transition-audit.js";

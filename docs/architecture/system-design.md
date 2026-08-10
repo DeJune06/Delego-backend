@@ -45,7 +45,7 @@ The presentation layer handles user interaction and UI rendering and lives in it
 - **Web**: Next.js, React, Tailwind CSS
 - **Mobile**: React Native (Planned)
 - **State Management**: React Context, Zustand
-- **API Client**: Axios, @delego/sdk
+- **API Client**: Axios, @delegolabs/sdk
 
 #### Key Considerations
 

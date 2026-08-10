@@ -1,5 +1,5 @@
 import { Sequelize } from "sequelize";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 
 const log = createLogger("notifications:db", process.env.LOG_LEVEL ?? "info");
 

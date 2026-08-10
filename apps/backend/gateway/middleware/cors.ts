@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { getRequestContext } from "./requestId.js";
 
 const log = createLogger("gateway");

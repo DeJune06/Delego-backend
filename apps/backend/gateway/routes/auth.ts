@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { generateId, json } from "@delego/utils";
+import { generateId, json } from "@delegolabs/utils";
 import * as authService from "../src/auth/authService.js";
 import * as oauthService from "../src/auth/oauthService.js";
 import {

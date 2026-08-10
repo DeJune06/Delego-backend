@@ -1,4 +1,4 @@
-import type { ApiResponse, Escrow, HealthCheckResponse } from "@delego/types";
+import type { ApiResponse, Escrow, HealthCheckResponse } from "@delegolabs/types";
 import { z } from "zod";
 import {
   ApiResponseSchema,
@@ -169,8 +169,8 @@ export class DelegoClient {
 
   async getDelegations(
     options?: { signal?: AbortSignal }
-  ): Promise<ApiResponse<import("@delego/types").Delegation[]>> {
-    return this.request<import("@delego/types").Delegation[]>(
+  ): Promise<ApiResponse<import("@delegolabs/types").Delegation[]>> {
+    return this.request<import("@delegolabs/types").Delegation[]>(
       "/api/v1/delegations",
       { signal: options?.signal },
       z.array(DelegationSchema)
@@ -179,8 +179,8 @@ export class DelegoClient {
 
   async getOrders(
     options?: { signal?: AbortSignal }
-  ): Promise<ApiResponse<import("@delego/types").Order[]>> {
-    return this.request<import("@delego/types").Order[]>(
+  ): Promise<ApiResponse<import("@delegolabs/types").Order[]>> {
+    return this.request<import("@delegolabs/types").Order[]>(
       "/api/v1/orders",
       { signal: options?.signal },
       z.array(OrderSchema)
@@ -190,8 +190,8 @@ export class DelegoClient {
   /** Approve a high-value order awaiting manual review. */
   async approveOrder(
     id: string
-  ): Promise<ApiResponse<import("@delego/types").Order>> {
-    return this.request<import("@delego/types").Order>(
+  ): Promise<ApiResponse<import("@delegolabs/types").Order>> {
+    return this.request<import("@delegolabs/types").Order>(
       `/api/v1/orders/${encodeURIComponent(id)}/approve`,
       { method: "POST" },
       OrderSchema
@@ -202,8 +202,8 @@ export class DelegoClient {
   async rejectOrder(
     id: string,
     reason?: string
-  ): Promise<ApiResponse<import("@delego/types").Order>> {
-    return this.request<import("@delego/types").Order>(
+  ): Promise<ApiResponse<import("@delegolabs/types").Order>> {
+    return this.request<import("@delegolabs/types").Order>(
       `/api/v1/orders/${encodeURIComponent(id)}/reject`,
       { method: "POST", body: JSON.stringify({ reason: reason ?? null }) },
       OrderSchema
@@ -212,8 +212,8 @@ export class DelegoClient {
 
   async getOrder(
     id: string
-  ): Promise<ApiResponse<import("@delego/types").Order>> {
-    return this.request<import("@delego/types").Order>(
+  ): Promise<ApiResponse<import("@delegolabs/types").Order>> {
+    return this.request<import("@delegolabs/types").Order>(
       `/api/v1/orders/${encodeURIComponent(id)}`,
       undefined,
       OrderSchema
@@ -223,8 +223,8 @@ export class DelegoClient {
   /** Cancel an order. */
   async cancelOrder(
     id: string
-  ): Promise<ApiResponse<import("@delego/types").Order>> {
-    return this.request<import("@delego/types").Order>(
+  ): Promise<ApiResponse<import("@delegolabs/types").Order>> {
+    return this.request<import("@delegolabs/types").Order>(
       `/api/v1/orders/${encodeURIComponent(id)}/cancel`,
       { method: "POST" },
       OrderSchema
@@ -242,9 +242,9 @@ export class DelegoClient {
   }
 
   async createDelegation(
-    input: import("@delego/types").CreateDelegationInput
-  ): Promise<ApiResponse<import("@delego/types").Delegation>> {
-    return this.request<import("@delego/types").Delegation>(
+    input: import("@delegolabs/types").CreateDelegationInput
+  ): Promise<ApiResponse<import("@delegolabs/types").Delegation>> {
+    return this.request<import("@delegolabs/types").Delegation>(
       "/api/v1/delegations",
       { method: "POST", body: JSON.stringify(input) },
       DelegationSchema
@@ -253,9 +253,9 @@ export class DelegoClient {
 
   async updateDelegation(
     id: string,
-    input: import("@delego/types").UpdateDelegationInput
-  ): Promise<ApiResponse<import("@delego/types").Delegation>> {
-    return this.request<import("@delego/types").Delegation>(
+    input: import("@delegolabs/types").UpdateDelegationInput
+  ): Promise<ApiResponse<import("@delegolabs/types").Delegation>> {
+    return this.request<import("@delegolabs/types").Delegation>(
       `/api/v1/delegations/${encodeURIComponent(id)}`,
       { method: "PATCH", body: JSON.stringify(input) },
       DelegationSchema

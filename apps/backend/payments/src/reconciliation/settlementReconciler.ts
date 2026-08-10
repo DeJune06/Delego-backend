@@ -3,7 +3,7 @@
  * Periodically compares database settlement records against on-chain escrow state.
  * Detects and resolves discrepancies from network failures or missed events.
  */
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { Pool } from "pg";
 
 const log = createLogger("payments:settlement-reconciler", process.env.LOG_LEVEL ?? "info");

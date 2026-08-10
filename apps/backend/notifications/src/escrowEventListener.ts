@@ -13,7 +13,7 @@
  *    alerts on reconnects or retries.
  *  - Errors are logged-and-skipped: a single bad event never halts the cursor.
  */
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { xdr } from "@stellar/stellar-sdk";
 import { sendEmail } from "../email/index.js";
 import {

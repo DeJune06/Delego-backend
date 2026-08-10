@@ -155,7 +155,7 @@ The Delego notifications system currently sends emails through SendGrid without 
 1. THE System SHALL establish a Sequelize connection to the same PostgreSQL database used by the gateway (via DATABASE_URL or POSTGRES_* environment variables)
 2. THE System SHALL define a FailedNotification Sequelize model following the same pattern as gateway models (User, Delegation, etc.)
 3. WHEN the notifications service starts, THE System SHALL run database migrations to create the failed_notifications table if it does not exist
-4. THE System SHALL reuse the existing db connection pattern from @delego/gateway or establish an independent connection if isolation is required
+4. THE System SHALL reuse the existing db connection pattern from @delegolabs/gateway or establish an independent connection if isolation is required
 5. THE FailedNotification model SHALL include timestamps (createdAt, updatedAt) automatically managed by Sequelize
 
 ### Requirement 10: Configuration and Environment Variables

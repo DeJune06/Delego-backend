@@ -2,8 +2,8 @@ import type {
   ApiResponse,
   TransactionRequest,
   TransactionResult,
-} from "@delego/types";
-import { createLogger } from "@delego/utils";
+} from "@delegolabs/types";
+import { createLogger } from "@delegolabs/utils";
 import { getWalletUrl } from "./config.js";
 import { estimateTransactionFee, type FeeEstimate } from "./feeEstimator.js";
 

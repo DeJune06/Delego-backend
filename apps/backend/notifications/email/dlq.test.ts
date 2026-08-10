@@ -4,7 +4,7 @@ import { FailedNotification } from "../src/models/FailedNotification.js";
 import type { EmailDispatchJob } from "./types.js";
 
 vi.mock("../src/models/FailedNotification.js");
-vi.mock("@delego/utils", () => ({
+vi.mock("@delegolabs/utils", () => ({
   createLogger: () => ({
     debug: vi.fn(),
     info: vi.fn(),

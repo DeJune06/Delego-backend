@@ -1,4 +1,4 @@
-import type { PermissionGrant } from "@delego/types";
+import type { PermissionGrant } from "@delegolabs/types";
 
 /** Soroban permissions contract interface — TODO: Implement contract calls */
 export interface PermissionsService {

@@ -1,4 +1,4 @@
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { FailedNotification } from "../src/models/FailedNotification.js";
 import type { EmailDispatchJob } from "./types.js";
 

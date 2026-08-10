@@ -1,5 +1,5 @@
-import type { ApiResponse } from "@delego/types";
-import { createLogger } from "@delego/utils";
+import type { ApiResponse } from "@delegolabs/types";
+import { createLogger } from "@delegolabs/utils";
 
 const log = createLogger("orchestrator:order-lookup", process.env.LOG_LEVEL ?? "info");
 

@@ -1,5 +1,5 @@
 {
-  "name": "@delego/tests-e2e",
+  "name": "@delegolabs/tests-e2e",
   "version": "0.0.1",
   "private": true,
   "scripts": {

@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { json } from "@delego/utils";
+import { json } from "@delegolabs/utils";
 import { checkRateLimit } from "../src/rateLimit/rateLimiter.js";
 import { extractAuth } from "./auth.js";
 import type { RateLimitConfig } from "../src/rateLimit/types.js";

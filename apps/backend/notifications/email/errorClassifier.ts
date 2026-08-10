@@ -1,4 +1,4 @@
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 
 const log = createLogger("notifications:errorClassifier", process.env.LOG_LEVEL ?? "info");
 

@@ -1,5 +1,5 @@
 {
-  "name": "@delego/wallet",
+  "name": "@delegolabs/wallet",
   "version": "0.0.1",
   "private": true,
   "description": "Delego wallet service",
@@ -15,8 +15,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-kms": "^3.750.0",
-    "@delego/types": "workspace:*",
-    "@delego/utils": "workspace:*",
+    "@delegolabs/types": "workspace:*",
+    "@delegolabs/utils": "workspace:*",
     "@stellar/stellar-sdk": "^15.1.0",
     "bullmq": "^5.78.1",
     "ioredis": "^5.11.1",

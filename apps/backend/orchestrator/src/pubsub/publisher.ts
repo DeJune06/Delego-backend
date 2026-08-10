@@ -1,4 +1,4 @@
-import type { Logger } from "@delego/utils";
+import type { Logger } from "@delegolabs/utils";
 import type { RedisClient, PublishResult } from "./types.js";
 
 function isTransientError(err: Error): boolean {

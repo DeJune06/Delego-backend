@@ -1,5 +1,5 @@
 import sgMail from "@sendgrid/mail";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { classifyError, calculateBackoffDelay } from "./errorClassifier.js";
 import { getRetryConfig } from "./config.js";
 import { logToDLQ } from "./dlq.js";

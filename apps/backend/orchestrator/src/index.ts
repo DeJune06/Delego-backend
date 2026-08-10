@@ -1,8 +1,8 @@
 /**
- * @delego/orchestrator — Workflow coordination
+ * @delegolabs/orchestrator — Workflow coordination
  * #64 Purchase Recovery Engine — reconcileWorkflows compares DB state with on-chain escrow.
  */
-import { createLogger, json, route, startHttpServer } from "@delego/utils";
+import { createLogger, json, route, startHttpServer } from "@delegolabs/utils";
 import { Pool } from "pg";
 import {
   createWorkflow,

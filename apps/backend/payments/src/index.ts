@@ -1,9 +1,9 @@
 /**
- * @delego/payments — Entry point
+ * @delegolabs/payments — Entry point
  * #68 Dispute Resolution Arbiter Multi-Sig
  */
-import { createLogger } from "@delego/utils";
-import { startHttpServer } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
+import { startHttpServer } from "@delegolabs/utils";
 import { registerRoutes } from "./routes.js";
 import { startReconciliationScheduler } from "./reconciliation/settlementReconciler.js";
 

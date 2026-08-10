@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import type { ApiResponse, TransactionRequest, TransactionResult } from "@delego/types";
-import { createLogger } from "@delego/utils";
+import type { ApiResponse, TransactionRequest, TransactionResult } from "@delegolabs/types";
+import { createLogger } from "@delegolabs/utils";
 import {
   Address,
   Horizon,

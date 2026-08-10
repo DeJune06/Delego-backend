@@ -33,10 +33,10 @@ importers:
 
   agents:
     dependencies:
-      '@delego/types':
+      '@delegolabs/types':
         specifier: workspace:*
         version: link:../packages/types
-      '@delego/utils':
+      '@delegolabs/utils':
         specifier: workspace:*
         version: link:../packages/utils
     devDependencies:
@@ -55,10 +55,10 @@ importers:
 
   apps/backend/gateway:
     dependencies:
-      '@delego/types':
+      '@delegolabs/types':
         specifier: workspace:*
         version: link:../../../packages/types
-      '@delego/utils':
+      '@delegolabs/utils':
         specifier: workspace:*
         version: link:../../../packages/utils
       ajv:
@@ -119,10 +119,10 @@ importers:
 
   apps/backend/notifications:
     dependencies:
-      '@delego/types':
+      '@delegolabs/types':
         specifier: workspace:*
         version: link:../../../packages/types
-      '@delego/utils':
+      '@delegolabs/utils':
         specifier: workspace:*
         version: link:../../../packages/utils
       '@sendgrid/mail':
@@ -177,10 +177,10 @@ importers:
 
   apps/backend/orchestrator:
     dependencies:
-      '@delego/types':
+      '@delegolabs/types':
         specifier: workspace:*
         version: link:../../../packages/types
-      '@delego/utils':
+      '@delegolabs/utils':
         specifier: workspace:*
         version: link:../../../packages/utils
       bullmq:
@@ -220,10 +220,10 @@ importers:
 
   apps/backend/payments:
     dependencies:
-      '@delego/types':
+      '@delegolabs/types':
         specifier: workspace:*
         version: link:../../../packages/types
-      '@delego/utils':
+      '@delegolabs/utils':
         specifier: workspace:*
         version: link:../../../packages/utils
       '@stellar/stellar-sdk':
@@ -257,10 +257,10 @@ importers:
       '@aws-sdk/client-kms':
         specifier: ^3.750.0
         version: 3.1097.0
-      '@delego/types':
+      '@delegolabs/types':
         specifier: workspace:*
         version: link:../../../packages/types
-      '@delego/utils':
+      '@delegolabs/utils':
         specifier: workspace:*
         version: link:../../../packages/utils
       '@stellar/stellar-sdk':
@@ -309,7 +309,7 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@delego/types':
+      '@delegolabs/types':
         specifier: workspace:*
         version: link:../types
       zod:
@@ -361,7 +361,7 @@ importers:
 
   tests/unit:
     dependencies:
-      '@delego/utils':
+      '@delegolabs/utils':
         specifier: workspace:*
         version: link:../../packages/utils
     devDependencies:

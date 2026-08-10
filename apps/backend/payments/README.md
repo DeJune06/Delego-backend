@@ -1,4 +1,4 @@
-# @delego/payments
+# @delegolabs/payments
 
 Delego **payments** service.
 
@@ -16,7 +16,7 @@ See `validation.ts` (`acquireLock`, `releaseLock`) for technical specifications.
 ## Development
 
 ```bash
-pnpm --filter @delego/payments dev
+pnpm --filter @delegolabs/payments dev
 ```
 
 Health check: `GET http://localhost:3014/health`
@@ -43,10 +43,10 @@ Each dependency reports `"ok"` or `"degraded"`. An unavailable Soroban RPC retur
 
 ```bash
 # Run tests once
-pnpm --filter @delego/payments test
+pnpm --filter @delegolabs/payments test
 
 # Watch mode
-pnpm --filter @delego/payments test:watch
+pnpm --filter @delegolabs/payments test:watch
 ```
 
 ## Environment Configuration

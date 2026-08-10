@@ -1,11 +1,11 @@
-# @delego/notifications
+# @delegolabs/notifications
 
 Delego **notifications** service with resilient email delivery, automatic retry with exponential backoff, and persistent Dead-Letter Queue (DLQ) for failed emails.
 
 ## Development
 
 ```bash
-pnpm --filter @delego/notifications dev
+pnpm --filter @delegolabs/notifications dev
 ```
 
 Health check: `GET http://localhost:3015/health`
@@ -167,7 +167,7 @@ With default EMAIL_RETRY_BASE_DELAY_SECONDS=2:
 Run migrations to create the `failed_notifications` table:
 
 ```bash
-pnpm --filter @delego/notifications migrate
+pnpm --filter @delegolabs/notifications migrate
 ```
 
 The migration is idempotent and creates:
@@ -286,7 +286,7 @@ Recommended alerts:
 Run tests:
 
 ```bash
-pnpm --filter @delego/notifications test
+pnpm --filter @delegolabs/notifications test
 ```
 
 Test coverage includes:
@@ -307,7 +307,7 @@ Pre-deployment:
 
 Deployment steps:
 1. Deploy new code
-2. Run database migrations: `pnpm --filter @delego/notifications migrate`
+2. Run database migrations: `pnpm --filter @delegolabs/notifications migrate`
 3. Verify configuration with `LOG_LEVEL=debug`
 4. Monitor logs for configuration validation and first dispatches
 5. Query `failed_notifications` table to verify DLQ is working

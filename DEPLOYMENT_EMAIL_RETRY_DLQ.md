@@ -44,13 +44,13 @@ These steps can be done before the feature is activated:
 pnpm install
 
 # Compile TypeScript
-pnpm --filter @delego/notifications build
+pnpm --filter @delegolabs/notifications build
 
 # Run tests
-pnpm --filter @delego/notifications test
+pnpm --filter @delegolabs/notifications test
 
 # Verify no compilation errors
-pnpm --filter @delego/notifications typecheck
+pnpm --filter @delegolabs/notifications typecheck
 ```
 
 ### 2. Database Migration
@@ -59,7 +59,7 @@ Run migrations to create the `failed_notifications` table:
 
 ```bash
 # Option A: Via Node.js script (if migration runner is configured)
-NODE_ENV=production pnpm --filter @delego/notifications migrate
+NODE_ENV=production pnpm --filter @delegolabs/notifications migrate
 
 # Option B: Manual Sequelize migration
 # Create migration runner script or use Sequelize CLI if available
@@ -81,7 +81,7 @@ Deploy the new code to production:
 
 ```bash
 # Build the notifications service
-pnpm --filter @delego/notifications build
+pnpm --filter @delegolabs/notifications build
 
 # Deploy dist/ directory to target environment
 # (via your deployment process: Docker, direct push, CI/CD, etc.)

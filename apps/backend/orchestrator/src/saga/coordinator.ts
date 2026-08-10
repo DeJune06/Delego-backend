@@ -1,4 +1,4 @@
-import { createLogger, type Logger } from "@delego/utils";
+import { createLogger, type Logger } from "@delegolabs/utils";
 import { SagaConcurrencyError, type SagaRecord, type SagaStep, type SagaStore } from "./types.js";
 
 const DEFAULT_CLAIM_LEASE_MS = 30_000;

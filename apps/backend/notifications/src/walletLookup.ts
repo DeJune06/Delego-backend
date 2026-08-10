@@ -16,7 +16,7 @@
  */
 
 import { createRequire } from "node:module";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 
 const log = createLogger(
   "notifications:walletLookup",

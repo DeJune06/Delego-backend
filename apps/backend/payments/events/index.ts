@@ -15,7 +15,7 @@
  */
 
 import { createRequire } from "node:module";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import {
   InMemoryProcessedContractEventStore,
   processEscrowContractEvent,

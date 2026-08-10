@@ -4,7 +4,7 @@
  *
  * The notifications service and the payments service are siblings in the
  * monorepo, but they intentionally do not depend on each other at runtime.
- * Instead of consuming `@delego/payments/events/dedup-store` directly, the
+ * Instead of consuming `@delegolabs/payments/events/dedup-store` directly, the
  * notifications service keeps a small, focused duplicate of the primitives
  * it actually needs (`deriveContractEventId` and an in-memory store).
  *

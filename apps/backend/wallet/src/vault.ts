@@ -9,7 +9,7 @@ import {
   type KMSClientConfig,
 } from "@aws-sdk/client-kms";
 import { Keypair, StrKey } from "@stellar/stellar-sdk";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { HsmKeySigner, type HsmKeySignerOptions } from "./hsmSigner.js";
 
 const log = createLogger("wallet:vault", process.env.LOG_LEVEL ?? "info");

@@ -18,7 +18,7 @@
  *    loop or stops the cursor from advancing.
  */
 import { createRequire } from "node:module";
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { xdr } from "@stellar/stellar-sdk";
 import { sendEmail } from "../email/index.js";
 import {

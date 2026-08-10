@@ -3,7 +3,7 @@
  * Tags workflows with versions at creation time and ensures in-flight workflows
  * continue on their original version while providing migration paths.
  */
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { Pool } from "pg";
 
 const log = createLogger("orchestrator:workflow-versioning", process.env.LOG_LEVEL ?? "info");

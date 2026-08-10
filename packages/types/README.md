@@ -1,11 +1,11 @@
-# @delego/types
+# @delegolabs/types
 
 Shared domain types and interfaces used across apps, services, and the SDK.
 
 ## Usage
 
 ```typescript
-import type { Delegation, Order, SpendingPolicy } from "@delego/types";
+import type { Delegation, Order, SpendingPolicy } from "@delegolabs/types";
 ```
 
 ## Guidelines

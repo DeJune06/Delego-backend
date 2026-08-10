@@ -1,5 +1,5 @@
 {
-  "name": "@delego/gateway",
+  "name": "@delegolabs/gateway",
   "version": "0.0.1",
   "private": true,
   "description": "Delego gateway service",
@@ -14,8 +14,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@delego/types": "workspace:*",
-    "@delego/utils": "workspace:*",
+    "@delegolabs/types": "workspace:*",
+    "@delegolabs/utils": "workspace:*",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
     "bcryptjs": "^3.0.3",

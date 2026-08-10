@@ -9,7 +9,7 @@
  * stalled approval flow doesn't hold a session open indefinitely.
  */
 
-import { createLogger } from "@delego/utils";
+import { createLogger } from "@delegolabs/utils";
 import { signMultisigTx } from "./account.js";
 
 const log = createLogger("wallet:stellar:multisig-session", process.env.LOG_LEVEL ?? "info");

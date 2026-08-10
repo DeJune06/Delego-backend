@@ -20,7 +20,7 @@ vi.mock("../src/models/FailedNotification.js", () => ({
 }));
 
 // Mock logger to avoid console noise in tests
-vi.mock("@delego/utils", () => ({
+vi.mock("@delegolabs/utils", () => ({
   createLogger: () => ({
     debug: vi.fn(),
     info: vi.fn(),
