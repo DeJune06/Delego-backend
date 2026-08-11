@@ -100,30 +100,21 @@ The wallet service simulates Soroban contract invocations:
 
 #### Account Endpoints
 
-- `GET /wallet/accounts/:address` - Get account details
-- `POST /wallet/accounts` - Create new account
-- `GET /wallet/accounts/:address/balance` - Get account balance
-- `GET /wallet/accounts/:address/transactions` - Get transaction history
-
-#### Permission Endpoints
-
-- `POST /wallet/permissions/grant` - Grant permission
-- `POST /wallet/permissions/revoke` - Revoke permission
-- `GET /wallet/permissions/:id` - Get permission details
-- `POST /wallet/permissions/check` - Check permission
+- `POST /wallets/create` - Create a new wallet
+- `GET /wallets/:address` - Get account details
+- `GET /wallets` - List wallets
+- `GET /api/v1/wallet/:address/balance` - Get account balance
+- `GET /api/v1/wallet/:address/transactions` - Get transaction history
 
 #### Transaction Endpoints
 
-- `POST /wallet/transactions/build` - Build transaction
-- `POST /wallet/transactions/sign` - Sign transaction
-- `POST /wallet/transactions/submit` - Submit transaction
-- `GET /wallet/transactions/:id` - Get transaction status
+- `POST /transactions/simulate` - Simulate a transaction
+- `POST /transactions/submit` - Submit a transaction
+- `POST /api/v1/wallet/merge` - Merge a wallet (move account)
+- `POST /api/v1/wallet/merge/preview` - Preview a wallet merge
+- `GET /api/v1/queue/jobs/:jobId` - Get queue job status
 
-#### Contract Endpoints
-
-- `POST /wallet/contracts/simulate` - Simulate contract call
-- `POST /wallet/contracts/invoke` - Invoke contract
-- `GET /wallet/contracts/:id/state` - Get contract state
+> The wallet service does not currently expose permission-granting or contract-invocation HTTP endpoints; those operations are performed via the Soroban contracts themselves and the transaction simulation/submission endpoints above.
 
 ## Key Management
 
@@ -389,20 +380,18 @@ Comprehensive audit logging:
 **Transaction Fails**
 
 ```bash
-# Check transaction status
-curl http://localhost:3012/transactions/:id
-
 # Simulate transaction
 curl -X POST http://localhost:3012/transactions/simulate
+
+# Check queue job status
+curl http://localhost:3012/api/v1/queue/jobs/:jobId
 ```
 
 **Permission Denied**
 
 ```bash
-# Check permission details
-curl http://localhost:3012/permissions/:id
-
-# Verify permission is not expired
+# Permissions are managed on-chain via the Soroban permissions contract
+# Check the delegation/allowance via the contract's getter functions
 ```
 
 **Key Not Found**
@@ -443,4 +432,4 @@ Enhanced security features:
 
 ---
 
-**Last Updated**: June 2026
+**Last Updated**: August 2026

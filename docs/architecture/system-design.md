@@ -71,7 +71,7 @@ The API layer provides a unified API entry point for all clients.
 
 #### Technologies
 
-- **Framework**: Express/Fastify
+- **Framework**: Node.js with TypeScript (`@delegolabs/utils` HTTP server)
 - **Authentication**: JWT
 - **Rate Limiting**: Redis
 - **Documentation**: OpenAPI/Swagger
@@ -101,7 +101,7 @@ The application layer contains business logic and workflow orchestration.
 #### Technologies
 
 - **Framework**: Node.js with TypeScript
-- **State Machine**: XState
+- **State Machine**: Custom XState-style state machine
 - **Event Bus**: Redis Pub/Sub
 - **Workflow Engine**: Custom orchestrator
 
@@ -115,7 +115,7 @@ The application layer contains business logic and workflow orchestration.
 
 ### Domain Layer
 
-**Components**: `apps/backend/wallet`, `apps/backend/payments`, `apps/backend/catalog`
+**Components**: `apps/backend/wallet`, `apps/backend/payments`
 
 The domain layer contains core business entities and domain logic.
 
@@ -158,7 +158,7 @@ The infrastructure layer provides foundational services.
 
 #### Technologies
 
-- **Database**: PostgreSQL 15
+- **Database**: PostgreSQL 16
 - **Cache**: Redis 7
 - **Blockchain**: Stellar, Soroban
 - **Storage**: S3 (Planned)

@@ -16,7 +16,7 @@ This guide helps you get started contributing to Delego. For detailed contributi
 ### Root Directory
 
 ```
-Delego/
+Delego-backend/
 ├── README.md              # Main project documentation
 ├── ARCHITECTURE.md        # System architecture overview
 ├── CONTRIBUTING.md        # Detailed contribution guidelines
@@ -62,8 +62,8 @@ Delego/
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-org/delego.git
-cd delego
+git clone https://github.com/DelegoLabs/Delego-backend.git
+cd delego-backend
 
 # 2. Install dependencies
 pnpm install
@@ -172,7 +172,6 @@ pnpm test
 # Run specific test suite
 pnpm test:unit
 pnpm test:integration
-pnpm test:contracts
 pnpm test:e2e
 
 # Build the project
@@ -223,7 +222,7 @@ Before submitting a PR, ensure:
 ### Code Quality
 
 - [ ] Code follows project style guidelines
-- [ ] Code is properly formatted (use `pnpm format`)
+- [ ] Code is properly formatted (use `prettier --write .`)
 - [ ] TypeScript compilation passes (`pnpm typecheck`)
 - [ ] No console.log statements in production code
 - [ ] No commented-out code
@@ -274,7 +273,7 @@ Before submitting a PR, ensure:
 ### Contact
 
 - **Email**: conduct@delego.dev (for conduct issues)
-- **GitHub**: @your-org/delego (for general inquiries)
+- **GitHub**: @DelegoLabs/Delego-backend (for general inquiries)
 
 ## Common Tasks
 
@@ -283,7 +282,7 @@ Before submitting a PR, ensure:
 1. Create service directory in `apps/backend/`
 2. Add package.json with service configuration
 3. Implement service with health check endpoint
-4. Add service to docker-compose.yml
+4. Register the service in the root `pnpm dev` script
 5. Update apps/backend/README.md
 6. Add tests for the service
 7. Update CI/CD configuration
@@ -332,8 +331,8 @@ docker ps
 # (platform-specific)
 
 # Rebuild containers
-docker-compose down
-docker-compose up -d --build
+docker compose down
+docker compose up -d --build
 ```
 
 **Tests failing locally**
@@ -341,11 +340,8 @@ docker-compose up -d --build
 # Check test environment
 echo $NODE_ENV
 
-# Reset database
-pnpm db:reset
-
 # Run tests with verbose output
-pnpm test --verbose
+pnpm test -- --verbose
 ```
 
 **TypeScript errors**

@@ -32,9 +32,9 @@ export function getDelegationOwnershipContext(req: IncomingMessage): DelegationO
  * @example
  * ```ts
  * import { verifyDelegationOwnership } from "../middleware/delegationOwnership.js";
- * 
- * router.put("/delegations/:id", verifyDelegationOwnership(), updateDelegationHandler);
- * router.delete("/delegations/:id", verifyDelegationOwnership(), revokeDelegationHandler);
+ *
+ * // compose into a route alongside a handler
+ * route("PATCH", "/api/v1/delegations/:id", [verifyDelegationOwnership(), updateDelegationHandler]);
  * ```
  */
 export function verifyDelegationOwnership() {

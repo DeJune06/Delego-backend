@@ -30,19 +30,17 @@ The infrastructure directory contains all infrastructure-related configurations 
 
 ```
 infrastructure/
-├── docker/              # Docker configurations
-│   ├── README.md        # Docker setup guide
-│   └── *.yml            # Docker Compose files
-├── terraform/           # Terraform configurations
-│   ├── README.md        # Terraform setup guide
-│   └── *.tf             # Terraform files
-├── monitoring/          # Monitoring configurations
-│   ├── README.md        # Monitoring setup guide
-│   └── *.yml            # Monitoring configs
-└── deployment/          # Deployment scripts
-    ├── README.md        # Deployment guide
-    └── *.sh             # Deployment scripts
+├── docker/              # Docker configuration guide
+│   └── README.md
+├── terraform/           # Terraform setup guide
+│   └── README.md
+├── monitoring/          # Monitoring setup guide
+│   └── README.md
+└── deployment/          # Deployment guide
+    └── README.md
 ```
+
+> The Terraform, monitoring, and deployment configurations are planned; the directories currently contain setup guides only.
 
 ## Docker Configuration
 
@@ -51,11 +49,9 @@ infrastructure/
 The root `docker-compose.yml` file defines the local development infrastructure:
 
 ```yaml
-version: '3.8'
-
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     environment:
       POSTGRES_DB: delego
       POSTGRES_USER: delego
@@ -64,6 +60,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./database/schema:/docker-entrypoint-initdb.d/schema:ro
 
   redis:
     image: redis:7-alpine
@@ -81,7 +78,7 @@ volumes:
 
 #### PostgreSQL
 
-- **Image**: postgres:15-alpine
+- **Image**: postgres:16-alpine
 - **Port**: 5432
 - **Database**: delego
 - **User**: delego
@@ -104,30 +101,30 @@ pnpm docker:up
 pnpm docker:down
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # Restart services
-docker-compose restart
+docker compose restart
 
 # Remove volumes (WARNING: deletes data)
-docker-compose down -v
+docker compose down -v
 ```
 
 ## Terraform Configuration
 
 ### Terraform Setup
 
-Terraform is used for infrastructure provisioning in cloud environments (AWS, GCP, Azure).
+Terraform will be used for infrastructure provisioning in cloud environments (AWS, GCP, Azure). **Planned — no `.tf` configuration exists yet.**
 
 ### Terraform Structure
 
 ```
 terraform/
-├── main.tf              # Main configuration
-├── variables.tf         # Variable definitions
-├── outputs.tf           # Output definitions
-├── provider.tf          # Provider configuration
-└── modules/             # Reusable modules
+├── main.tf              # Main configuration (planned)
+├── variables.tf         # Variable definitions (planned)
+├── outputs.tf           # Output definitions (planned)
+├── provider.tf          # Provider configuration (planned)
+└── modules/             # Reusable modules (planned)
     ├── vpc/
     ├── database/
     └── kubernetes/
@@ -269,16 +266,16 @@ Critical alerts:
 
 ### Deployment Scripts
 
-Deployment scripts are located in `infrastructure/deployment/`:
+Deployment scripts will be located in `infrastructure/deployment/` once the deployment workflow is defined:
 
 ```bash
-# Deploy to staging
+# Deploy to staging (planned)
 ./deploy.sh staging
 
-# Deploy to production
+# Deploy to production (planned)
 ./deploy.sh production
 
-# Rollback deployment
+# Rollback deployment (planned)
 ./rollback.sh production
 ```
 
@@ -319,8 +316,8 @@ jobs:
 
 ```bash
 # Clone repository
-git clone https://github.com/your-org/delego.git
-cd delego
+git clone https://github.com/DelegoLabs/Delego-backend.git
+cd delego-backend
 
 # Install dependencies
 pnpm install
@@ -340,7 +337,6 @@ pnpm dev
 
 ### Accessing Services
 
-- **Web App**: http://localhost:3001
 - **API Gateway**: http://localhost:3000
 - **PostgreSQL**: localhost:5432
 - **Redis**: localhost:6379
@@ -380,7 +376,7 @@ Production infrastructure follows a multi-region, highly available architecture:
 
 #### Database
 
-- **Type**: PostgreSQL 15
+- **Type**: PostgreSQL 16
 - **Provider**: AWS RDS / Google Cloud SQL
 - **Configuration**: Multi-AZ deployment
 - **Replication**: Read replicas for scaling

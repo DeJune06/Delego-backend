@@ -164,10 +164,10 @@ With default EMAIL_RETRY_BASE_DELAY_SECONDS=2:
 
 ### Database Migration
 
-Run migrations to create the `failed_notifications` table:
+Run the root migration runner to create the `failed_notifications` table:
 
 ```bash
-pnpm --filter @delegolabs/notifications migrate
+pnpm db:migrate
 ```
 
 The migration is idempotent and creates:
@@ -307,7 +307,7 @@ Pre-deployment:
 
 Deployment steps:
 1. Deploy new code
-2. Run database migrations: `pnpm --filter @delegolabs/notifications migrate`
+2. Run database migrations: `pnpm db:migrate`
 3. Verify configuration with `LOG_LEVEL=debug`
 4. Monitor logs for configuration validation and first dispatches
 5. Query `failed_notifications` table to verify DLQ is working

@@ -54,20 +54,23 @@ The API gateway serves as the single entry point for all client requests.
 
 #### Tech Stack
 
-- Node.js with Express/Fastify
+- Node.js with TypeScript (`@delegolabs/utils` HTTP server)
 - JWT for authentication
 - Redis for rate limiting
 - PostgreSQL for user data
 
 #### Endpoints
 
+- `POST /api/v1/auth/register` - User registration
 - `POST /api/v1/auth/login` - User authentication
+- `POST /api/v1/auth/refresh` - Token refresh
 - `POST /api/v1/auth/logout` - User logout
-- `GET /api/v1/wallet/connect` - Wallet connection
-- `GET /api/v1/delegations` - List user delegations
-- `POST /api/v1/delegations` - Create delegation
-- `GET /api/v1/orders` - List orders
-- `POST /api/v1/orders` - Create order
+- `GET/POST /api/v1/delegations` - List / create delegations
+- `GET/PATCH/DELETE /api/v1/delegations/:id` - Delegation detail / update / revoke
+- `GET /api/v1/wallets/:walletId` - Wallet lookup
+- `GET /api/v1/admin/rate-limit/metrics` - Rate-limit metrics
+- `GET /api/v1/admin/circuit-breakers` - Circuit breaker status
+- `GET /api/docs` - Swagger UI
 
 ### Orchestrator Service (`apps/backend/orchestrator`)
 
@@ -104,7 +107,7 @@ The orchestrator service coordinates purchase workflows across multiple services
 #### Tech Stack
 
 - Node.js with TypeScript
-- State machine library (XState)
+- Custom XState-style state machine (no external dependency)
 - Event bus (Redis Pub/Sub)
 - PostgreSQL for workflow persistence
 
@@ -279,13 +282,15 @@ apps/backend/
 # Start all services
 pnpm dev
 
-# Start specific service
+# Start the gateway
 pnpm dev:gateway
-pnpm dev:orchestrator
-pnpm dev:agents
-pnpm dev:wallet
-pnpm dev:payments
-pnpm dev:notifications
+
+# Start a specific service
+pnpm --filter @delegolabs/orchestrator dev
+pnpm --filter @delegolabs/wallet dev
+pnpm --filter @delegolabs/payments dev
+pnpm --filter @delegolabs/notifications dev
+pnpm --filter @delegolabs/agents dev
 ```
 
 ### Building Services
@@ -392,17 +397,17 @@ pnpm docker:up
 pnpm dev
 ```
 
-### Staging
+### Staging (Planned)
 
-Services deployed to Kubernetes staging cluster:
+Services will be deployed to a Kubernetes staging cluster. Kubernetes manifests are not yet in this repository:
 
 ```bash
 kubectl apply -f k8s/staging/
 ```
 
-### Production
+### Production (Planned)
 
-Services deployed to Kubernetes production cluster with blue-green deployment:
+Services will be deployed to a Kubernetes production cluster with blue-green deployment. Kubernetes manifests are not yet in this repository:
 
 ```bash
 kubectl apply -f k8s/production/

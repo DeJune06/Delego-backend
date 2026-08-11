@@ -54,7 +54,7 @@ This service uses `@delegolabs/utils` to validate Stellar public keys at route b
 |---|---|
 | `validatePublicKey(key)` | Returns `{ valid, normalized?, error? }` — trims whitespace, rejects secret seeds (`S...`), validates Ed25519 public key (`G...`) |
 | `isValidStellarPublicKey(key)` | Boolean shorthand for `validatePublicKey(key).valid` |
-| `validatePublicKeyMiddleware(paramName)` | Express middleware that validates a route param and responds with HTTP 400 on failure |
+| `validatePublicKeyMiddleware(paramName)` | Route-boundary helper that validates a route param and responds with HTTP 400 on failure |
 | `normalizeStellarAddress(input)` | Returns `{ original, normalized, valid }` — trims whitespace, rejects secret seeds and malformed StrKey values per SDK behavior; used by `stellar/account.ts` before Horizon and vault lookups |
 
 Malformed keys and secret keys are rejected before processing.

@@ -18,4 +18,4 @@ Closes #364
 Closes #365
 Closes #366
 
-- `cargo test` in contracts/permissions — 8 new transfer_permission tests verify owner authorization, delegate validation, idempotency, and event emission.
+- `cargo test` in the [Delego-contracts](https://github.com/DelegoLabs/Delego-contracts) repo (`permissions/` crate) — 8 new transfer_permission tests verify owner authorization, delegate validation, idempotency, and event emission.

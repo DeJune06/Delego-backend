@@ -205,8 +205,9 @@ Agents communicate with backend services:
 - **Gateway**: For API calls
 - **Wallet**: For wallet operations
 - **Payments**: For payment operations
-- **Catalog**: For product information
 - **Notifications**: For sending notifications
+
+> A catalog service is planned but not yet implemented; agent product searches currently rely on external merchant catalogs.
 
 ## Spending Policies
 

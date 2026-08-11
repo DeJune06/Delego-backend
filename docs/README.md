@@ -33,7 +33,6 @@ docs/
 ├── vision.md                    # Product vision and goals
 ├── problem.md                   # Problem statement and motivation
 ├── architecture/                # Technical architecture documentation
-│   ├── README.md                # Architecture overview
 │   ├── system-design.md         # System design details
 │   ├── agents.md                # Agent architecture
 │   ├── contracts.md             # Smart contract architecture

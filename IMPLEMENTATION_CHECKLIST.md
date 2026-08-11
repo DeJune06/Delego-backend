@@ -122,7 +122,7 @@
   - [x] Add `@stellar/stellar-sdk` as direct dependency
   - [x] Add `vitest` dev dependency
   - [x] Update test script to `vitest run`
-  - [x] Add `test:watch` script
+  - [x] Watch mode via `pnpm exec vitest watch`
 
 - [x] **tsconfig.json**
   - [x] Exclude `**/*.test.ts` from compilation

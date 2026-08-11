@@ -58,11 +58,8 @@ pnpm --filter @delegolabs/notifications typecheck
 Run migrations to create the `failed_notifications` table:
 
 ```bash
-# Option A: Via Node.js script (if migration runner is configured)
-NODE_ENV=production pnpm --filter @delegolabs/notifications migrate
-
-# Option B: Manual Sequelize migration
-# Create migration runner script or use Sequelize CLI if available
+# Apply all pending migrations from the repo root
+pnpm db:migrate
 ```
 
 **Important**: This step creates the `failed_notifications` table. It is idempotent and safe to run multiple times.
@@ -101,7 +98,7 @@ DATABASE_URL=postgresql://user:pass@host:5432/delego
 LOG_LEVEL=info  # or debug for more detailed logs during verification
 
 # Start service
-npm start
+pnpm --filter @delegolabs/notifications start
 # or via process manager: systemctl start delego-notifications
 ```
 
@@ -114,9 +111,9 @@ Check that the service started correctly:
 # Expected: "Email retry configuration loaded { EMAIL_MAX_RETRIES: 3, ... }"
 
 # Test email dispatch
-curl -X POST http://localhost:3015/api/dispatch \
+curl -X POST http://localhost:3015/notify/transaction-approval \
   -H "Content-Type: application/json" \
-  -d '{"userId":"test","email":"user@example.com",...}'
+  -d '{"userId":"user-123","email":"user@example.com","transactionId":"txn-123","amount":"100 XLM","merchant":"Example Store","approvalUrl":"https://example.com/approve"}'
 
 # Verify no errors in logs
 # Check for: "Database connection established successfully"

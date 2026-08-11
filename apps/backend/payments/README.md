@@ -46,7 +46,7 @@ Each dependency reports `"ok"` or `"degraded"`. An unavailable Soroban RPC retur
 pnpm --filter @delegolabs/payments test
 
 # Watch mode
-pnpm --filter @delegolabs/payments test:watch
+pnpm --filter @delegolabs/payments exec vitest watch
 ```
 
 ## Environment Configuration

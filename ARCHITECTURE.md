@@ -121,19 +121,22 @@ Delego implements a microservices architecture designed for AI-powered delegated
 - CORS handling
 
 **Tech Stack:**
-- Node.js with Express/Fastify
+- Node.js with TypeScript (`@delegolabs/utils` HTTP server)
 - JWT for authentication
 - Redis for rate limiting
 - PostgreSQL for user data
 
 **API Endpoints:**
+- `POST /api/v1/auth/register` - User registration
 - `POST /api/v1/auth/login` - User authentication
+- `POST /api/v1/auth/refresh` - Token refresh
 - `POST /api/v1/auth/logout` - User logout
-- `GET /api/v1/wallet/connect` - Wallet connection
-- `GET /api/v1/delegations` - List user delegations
-- `POST /api/v1/delegations` - Create delegation
-- `GET /api/v1/orders` - List orders
-- `POST /api/v1/orders` - Create order
+- `GET/POST /api/v1/delegations` - List / create delegations
+- `GET/PATCH/DELETE /api/v1/delegations/:id` - Delegation detail / update / revoke
+- `GET /api/v1/wallets/:walletId` - Wallet lookup
+- `GET /api/v1/admin/rate-limit/metrics` - Rate-limit metrics
+- `GET /api/v1/admin/circuit-breakers` - Circuit breaker status
+- `GET /api/docs` - Swagger UI
 
 ### Orchestrator Service (`apps/backend/orchestrator`)
 
@@ -161,7 +164,7 @@ Delego implements a microservices architecture designed for AI-powered delegated
 
 **Tech Stack:**
 - Node.js with TypeScript
-- State machine library (XState)
+- Custom XState-style state machine (no external dependency)
 - Event bus (Redis Pub/Sub)
 - PostgreSQL for workflow persistence
 
@@ -369,7 +372,7 @@ Delego implements a microservices architecture designed for AI-powered delegated
 
 ### Development Environment
 
-- **Docker Compose**: Local development with all services
+- **Docker Compose**: Local development infrastructure (PostgreSQL and Redis)
 - **Hot Reload**: Development mode with auto-reload
 - **Shared Database**: Single PostgreSQL instance
 - **Shared Redis**: Single Redis instance

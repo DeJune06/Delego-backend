@@ -32,8 +32,8 @@ Before you begin contributing, ensure you have the following installed:
    ```bash
    # Fork the repository on GitHub
    # Then clone your fork
-   git clone https://github.com/YOUR_USERNAME/delego.git
-   cd delego
+   git clone https://github.com/YOUR_USERNAME/delego-backend.git
+   cd delego-backend
    ```
 
 2. **Install Dependencies**
@@ -69,7 +69,7 @@ For detailed setup instructions, see [docs/contributor-guide.md](./docs/contribu
 
 ### 1. Choose an Issue
 
-- Browse [GitHub Issues](https://github.com/your-org/delego/issues) for open issues
+- Browse [GitHub Issues](https://github.com/DelegoLabs/Delego-backend/issues) for open issues
 - Look for issues labeled `good first issue` if you're new to the project
 - Comment on the issue to claim it and ask questions if needed
 - Create a new issue if you've found a bug or have a feature request
@@ -145,7 +145,6 @@ pnpm test
 # Run specific test suites
 pnpm test:unit
 pnpm test:integration
-pnpm test:contracts
 ```
 
 ### 5. Submit a Pull Request
@@ -188,27 +187,7 @@ function getUserById(id: any): any {
 
 ### Rust (Soroban Contracts)
 
-- **Best Practices**: Follow Soroban best practices
-- **Error Handling**: Use `Result` types for error handling
-- **Testing**: Include comprehensive contract tests
-- **Documentation**: Document public functions and structs
-- **Safety**: Leverage Rust's safety features
-
-```rust
-// Good
-pub fn escrow_funds(env: Env, amount: i128) -> Result<(), Error> {
-    if amount <= 0 {
-        return Err(Error::InvalidAmount);
-    }
-    // Implementation
-    Ok(())
-}
-
-// Bad
-pub fn escrow_funds(env: Env, amount: i128) {
-    // Implementation without error handling
-}
-```
+Rust/Soroban contracts are developed in the separate [DelegoLabs/Delego-contracts](https://github.com/DelegoLabs/Delego-contracts) repository. See its contributing guide for Rust-specific conventions.
 
 ### General Guidelines
 
@@ -222,7 +201,7 @@ pub fn escrow_funds(env: Env, amount: i128) {
 
 ### API Gateway (`apps/backend/gateway`)
 
-**Tech Stack:** Node.js, Express/Fastify, TypeScript
+**Tech Stack:** Node.js, TypeScript
 
 **Good First Issues:**
 - API endpoint implementation
@@ -233,12 +212,11 @@ pub fn escrow_funds(env: Env, amount: i128) {
 
 **Key Files:**
 - `routes/` - API route definitions
-- `middleware/` - Express middleware
 - `auth/` - Authentication logic
 
 ### Orchestrator Service (`apps/backend/orchestrator`)
 
-**Tech Stack:** Node.js, TypeScript, XState
+**Tech Stack:** Node.js, TypeScript, custom state machine (via `@delegolabs/utils`)
 
 **Good First Issues:**
 - Workflow state definitions
@@ -264,7 +242,7 @@ pub fn escrow_funds(env: Env, amount: i128) {
 **Key Files:**
 - `buyer-agent/` - Buyer agent implementation
 - `payment-agent/` - Payment agent implementation
-- `runtime/` - Agent runtime abstraction
+- `src/` - Agent runtime (LLM and tool integration)
 
 ### Wallet Service (`apps/backend/wallet`)
 
@@ -361,14 +339,8 @@ pnpm test:unit
 # Run integration tests only
 pnpm test:integration
 
-# Run contract tests only
-pnpm test:contracts
-
-# Run tests with coverage
-pnpm test:coverage
-
-# Run tests in watch mode
-pnpm test:watch
+# Run a specific service's tests in watch mode
+pnpm --filter @delegolabs/gateway exec vitest
 ```
 
 ## 📚 Documentation

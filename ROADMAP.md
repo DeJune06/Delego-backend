@@ -25,15 +25,15 @@ This roadmap outlines the development milestones for Delego, an AI-powered deleg
 - [x] Docker Compose for PostgreSQL and Redis
 - [x] Basic project structure and documentation
 - [x] TypeScript configuration
-- [x] Rust workspace for Soroban contracts
+- [x] Rust workspace for Soroban contracts (moved to [DelegoLabs/Delego-contracts](https://github.com/DelegoLabs/Delego-contracts))
 
 ### In Progress Items
 
 - [ ] Comprehensive contributor onboarding documentation
 - [ ] Soroban local development environment setup
 - [ ] Development environment validation scripts
-- [ ] Initial database schema design
-- [ ] Basic service scaffolding
+- [x] Initial database schema design
+- [x] Basic service scaffolding
 
 ### Upcoming Items
 
@@ -55,7 +55,7 @@ This roadmap outlines the development milestones for Delego, an AI-powered deleg
 
 ### 1.1 API Gateway & Authentication
 
-- [ ] API gateway with Express/Fastify
+- [ ] API gateway with Node.js and `@delegolabs/utils` HTTP server
 - [ ] JWT authentication middleware
 - [ ] Role-based access control (RBAC)
 - [ ] Wallet-based authorization

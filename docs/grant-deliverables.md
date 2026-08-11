@@ -50,7 +50,7 @@ This document outlines the milestones and deliverables for the Delego project gr
 
 #### Evidence
 
-- Repository: https://github.com/your-org/delego
+- Repository: https://github.com/DelegoLabs/Delego-backend
 - Documentation: README.md, ARCHITECTURE.md
 - CI/CD: GitHub Actions workflows
 
@@ -267,7 +267,7 @@ At the conclusion of the grant, a final report will include:
 For grant-related inquiries:
 
 - **Email**: grants@delego.dev
-- **GitHub**: https://github.com/your-org/delego
+- **GitHub**: https://github.com/DelegoLabs/Delego-backend
 - **Discord**: [Link coming soon]
 
 ---

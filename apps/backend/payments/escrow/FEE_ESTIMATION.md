@@ -185,13 +185,13 @@ log.warn("Failed to fetch fee estimate from Horizon, using fallback", {
 
 ```bash
 # Run all tests once
-npm run test
+pnpm --filter @delegolabs/payments test
 
 # Watch mode (continuous testing)
-npm run test:watch
+pnpm --filter @delegolabs/payments exec vitest watch
 
 # Run specific test file
-npm run test -- feeEstimator.test.ts
+pnpm --filter @delegolabs/payments exec vitest run feeEstimator.test.ts
 ```
 
 ### Test Coverage

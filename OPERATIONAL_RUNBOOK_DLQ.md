@@ -200,8 +200,8 @@ Before replaying, ensure the original issue is fixed:
 Option A: Via API (if you have an API endpoint):
 
 ```bash
-# Resend using dispatcher
-curl -X POST http://localhost:3015/api/notifications/dispatch \
+# Resend using the transaction approval dispatcher
+curl -X POST http://localhost:3015/notify/transaction-approval \
   -H "Content-Type: application/json" \
   -d '{
     "userId": "user-123",

@@ -30,7 +30,9 @@ Delego uses PostgreSQL as its primary relational database for storing user data,
 ```
 database/
 ├── schema/              # Initial schema definitions
-│   └── 001_initial.sql  # Initial database schema
+│   ├── 001_initial.sql  # Initial database schema
+│   ├── 002_orchestrator_sagas.sql
+│   └── 003_purchase_workflows.sql
 ├── migrations/          # Versioned database migrations
 │   └── README.md        # Migration guidelines
 ├── seed/                # Development seed data
@@ -265,16 +267,9 @@ DROP TABLE IF EXISTS user_preferences;
 ```bash
 # Apply all pending migrations
 pnpm db:migrate
-
-# Rollback last migration
-pnpm db:migrate:rollback
-
-# Reset database (drop and recreate)
-pnpm db:reset
-
-# View migration status
-pnpm db:migrate:status
 ```
+
+Migrations are tracked by the runner at `scripts/setup/migrate.js`. Rollback and reset are not supported; write new migrations to correct schema issues.
 
 ## Seed Data
 
@@ -304,10 +299,6 @@ INSERT INTO delegations (user_id, agent_type, spending_limit) VALUES
 ```bash
 # Seed development data
 pnpm db:seed
-
-# Seed specific environment
-pnpm db:seed:development
-pnpm db:seed:test
 ```
 
 ## Development
@@ -473,12 +464,8 @@ VACUUM ANALYZE;
 
 **Migration Failures**
 ```bash
-# Check migration status
-pnpm db:migrate:status
-
-# Rollback and retry
-pnpm db:migrate:rollback
-pnpm db:migrate
+# Check migration runner logs
+node scripts/setup/migrate.js --help
 ```
 
 **Connection Issues**
@@ -509,4 +496,4 @@ WHERE (now() - pg_stat_activity.query_start) > interval '5 minutes';
 
 ---
 
-**Last Updated**: June 2026
+**Last Updated**: August 2026

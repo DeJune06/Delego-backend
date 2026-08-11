@@ -66,20 +66,19 @@ export interface DelegationOwnershipCheck {
 **Usage Example**:
 
 ```typescript
-import { verifyDelegationOwnership } from "../middleware/delegationOwnership.js";
+import { route } from "@delegolabs/utils";
+import { updateDelegationHandler, revokeDelegationHandler } from "./delegations.js";
 
-// In route handlers
-router.patch(
-  "/api/v1/delegations/:id",
-  verifyDelegationOwnership(),
-  updateDelegationHandler,
-);
-router.delete(
-  "/api/v1/delegations/:id",
-  verifyDelegationOwnership(),
-  revokeDelegationHandler,
-);
+// In the routes array
+route("PATCH", "/api/v1/delegations/:id", updateDelegationHandler),
+route("DELETE", "/api/v1/delegations/:id", revokeDelegationHandler),
 ```
+
+The ownership check is performed inside the handlers via
+`checkDelegationOwnership(userId, delegationId)` — see
+`apps/backend/gateway/routes/delegations.ts`. The `verifyDelegationOwnership()`
+middleware (in `apps/backend/gateway/middleware/delegationOwnership.ts`) is
+available for composing `(req, res, next)` middlewares into routes if needed.
 
 **Error Responses**:
 
@@ -126,7 +125,6 @@ Health check endpoint: `GET http://localhost:3000/health`
 - `degraded`: One or more dependencies are unhealthy
 
 The endpoint always returns HTTP 200, even when degraded, to distinguish between endpoint unavailability and service degradation.
- main
 
 ## API v1 JSON Body Size Limit
 
