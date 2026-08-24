@@ -1,4 +1,4 @@
--- Migration: 010_workflow_events
+-- Migration: 011_workflow_events
 -- Description: Event sourcing for workflow state transitions (Issue #354)
 -- Stores every workflow event with full metadata for replay and audit.
 

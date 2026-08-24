@@ -1,8 +1,23 @@
 # Database Migrations
 
-Versioned SQL migrations applied in order.
+Deterministic, checksum-validated SQL migrations for Delego.
 
-Naming convention: `NNN_description.sql`
+## Directory semantics
+
+- `database/schema/` contains the **baseline schema** applied to a brand-new database.
+- `database/migrations/` contains **incremental changes** applied after the baseline.
+- Baseline files always run before incremental files.
+- Within each directory, files run in ascending numeric-prefix order; the filename is the tie-breaker.
+
+The current baseline is:
+
+| Baseline | Description |
+|----------|-------------|
+| `001_initial.sql` | Users, wallets, orders, delegations, delegation policies, permission levels |
+| `002_orchestrator_sagas.sql` | Orchestrator saga coordinator state |
+| `003_purchase_workflows.sql` | Purchase workflow state persistence (Issue #54) |
+
+The incremental migrations are:
 
 | Migration | Description |
 |-----------|-------------|
@@ -15,17 +30,74 @@ Naming convention: `NNN_description.sql`
 | `008_workflow_transition_audit.sql` | Lightweight audit records for workflow transitions (Issue #206) |
 | `009_payment_records.sql` | Payment records for escrow coordinator fund/release/refund tracking |
 | `010_escrow_funding_locks.sql` | Escrow funding lock table for double-funding prevention |
-| `010_workflow_events.sql` | Event sourcing for workflow state transitions (Issue #354) |
-| `011_notification_preferences.sql` | Persistent notification preferences per user (#135) |
-| `011_soroban_transaction_ledger.sql` | Idempotent Soroban transaction ledger for submission, confirmation, and failure states |
-| `012_payment_records_dispute.sql` | Dispute transactions on payment_records for the escrow coordinator |
-| `013_oauth_providers.sql` | OAuth2 provider account linking |
+| `011_workflow_events.sql` | Event sourcing for workflow state transitions (Issue #354) |
+| `012_notification_preferences.sql` | Persistent notification preferences per user (#135) |
+| `013_soroban_transaction_ledger.sql` | Idempotent Soroban transaction ledger for submission, confirmation, and failure states |
+| `014_payment_records_dispute.sql` | Dispute transactions on payment_records for the escrow coordinator |
+| `015_oauth_providers.sql` | OAuth2 provider account linking |
 
-## Running Migrations
+## Naming rules
+
+```text
+<unique-number>_<short_description>.sql
+```
+
+- Numbers must be unique within their directory and must never be reused.
+- Only `.sql` files are treated as migrations; other files in these directories are ignored.
+- Filenames that do not match `<number>_<description>.sql` fail the migration run.
+
+## Tracking
+
+The runner creates a `schema_migrations` table:
+
+```sql
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  id BIGSERIAL PRIMARY KEY,
+  filename TEXT NOT NULL UNIQUE,
+  migration_group TEXT NOT NULL CHECK (migration_group IN ('schema', 'migration')),
+  version INTEGER NOT NULL,
+  checksum CHAR(64) NOT NULL,
+  applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+- Each file is tracked by its relative filename (`schema/001_initial.sql`) and its SHA-256 checksum.
+- Each migration runs inside a transaction together with its tracking row, so a failed migration leaves no partial schema and no tracking record.
+- Applied files with matching checksums are skipped, making reruns a no-op.
+- Editing an already-applied file causes a **checksum mismatch** and the run fails before applying anything else. To change the schema, create a new migration instead.
+- Deleting or renaming an applied migration file is also reported as an error.
+- Duplicate version numbers within one directory fail validation before any SQL executes.
+- Runs are serialized with the PostgreSQL advisory lock `hashtext('delegobackend:schema-migrations')`.
+
+## Commands
 
 ```bash
 # Apply all pending migrations
 pnpm db:migrate
+
+# Show applied/pending migrations and checksum health
+pnpm db:migrate:status
 ```
 
-Migrations are tracked by the migration runner at `scripts/setup/migrate.js`. Rollback is not currently supported; write new migrations to correct schema issues.
+The runner connects using `DATABASE_URL` (defaults to `postgresql://delego:delego@localhost:5432/delego`). For tests, `DELEGO_SCHEMA_DIR` and `DELEGO_MIGRATIONS_DIR` can override the migration directories.
+
+## Fresh setup
+
+```bash
+docker compose up -d --wait postgres
+pnpm db:migrate
+pnpm db:migrate:status
+```
+
+A clean database must contain all expected tables before backend services are started.
+
+## Creating a migration
+
+1. Run `pnpm db:migrate:status` to see the highest applied number.
+2. Create `database/migrations/<next-number>_<description>.sql`. Never reuse or renumber existing files.
+3. Write plain SQL — each file runs exactly once inside a transaction. Avoid non-transactional statements such as `CREATE INDEX CONCURRENTLY`.
+4. Test locally against a clean database (`docker compose down -v && docker compose up -d --wait postgres && pnpm db:migrate`).
+5. Update this README's migration table.
+6. Never edit an applied migration file: the recorded SHA-256 checksum will no longer match and every subsequent `db:migrate`/`db:migrate:status` fails until the file is restored.
+
+Rollback is not currently supported; write new migrations to correct schema issues.

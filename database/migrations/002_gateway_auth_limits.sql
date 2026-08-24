@@ -7,7 +7,15 @@
 ALTER TABLE users ALTER COLUMN stellar_address DROP NOT NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
 ALTER TABLE users ALTER COLUMN email SET NOT NULL;
-ALTER TABLE users ADD CONSTRAINT users_email_key UNIQUE (email);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'users_email_key' AND conrelid = 'users'::regclass
+    ) THEN
+        ALTER TABLE users ADD CONSTRAINT users_email_key UNIQUE (email);
+    END IF;
+END$$;
 
 -- Wallets (if not exists)
 CREATE TABLE IF NOT EXISTS wallets (
@@ -57,7 +65,12 @@ CREATE TABLE IF NOT EXISTS delegation_policies (
 CREATE INDEX IF NOT EXISTS idx_delegation_policies_delegation_id ON delegation_policies(delegation_id);
 
 -- Permission Levels
-CREATE TYPE permission_type AS ENUM ('VIEW_ONLY', 'AUTO_APPROVE', 'SIGNER', 'ADMIN');
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'permission_type') THEN
+        CREATE TYPE permission_type AS ENUM ('VIEW_ONLY', 'AUTO_APPROVE', 'SIGNER', 'ADMIN');
+    END IF;
+END$$;
 
 CREATE TABLE IF NOT EXISTS permission_levels (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

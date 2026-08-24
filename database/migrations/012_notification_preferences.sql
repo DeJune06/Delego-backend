@@ -1,4 +1,4 @@
--- Migration: 011_notification_preferences
+-- Migration: 012_notification_preferences
 -- Description: Persistent notification preferences per user (#135)
 
 CREATE TABLE IF NOT EXISTS notification_preferences (

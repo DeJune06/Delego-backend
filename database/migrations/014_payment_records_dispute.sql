@@ -1,4 +1,4 @@
--- Migration: 012_payment_records_dispute
+-- Migration: 014_payment_records_dispute
 -- Description: Track dispute transactions on payment_records so the escrow
 -- coordinator can emit a payment:disputed event when an escrow enters the
 -- Disputed state on-chain.

@@ -358,6 +358,10 @@ importers:
       '@stellar/stellar-sdk':
         specifier: ^15.1.0
         version: 15.1.0
+    devDependencies:
+      pg:
+        specifier: ^8.21.0
+        version: 8.21.0
 
   tests/unit:
     dependencies:
