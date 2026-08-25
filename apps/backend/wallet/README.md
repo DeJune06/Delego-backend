@@ -167,3 +167,76 @@ interface EncryptedSeedPhrase {
 ```
 This can be saved directly in a text or JSON/JSONB column. The `keyVersion` metadata determines which key version (e.g., `v1`, `v2`) was used for encryption, enabling seamless background rotation of legacy rows during decrypt-reencrypt operations.
 
+## Soroban Permissions Contract Client
+
+The Permissions Service (`permissions/index.ts`) provides a client for on-chain delegated spending limit enforcement on Soroban smart contracts.
+
+### Core Features
+
+- **On-Chain Spending Limits**: Enforces spend caps and expiration dates for delegated buyer and payment agents directly on Soroban smart contracts.
+- **Pre-Submit Simulation**: All state-modifying invocations (`grant`, `revoke`) are simulated via `SorobanTransactionSimulator` before submission. Simulation failures abort immediately without broadcasting transactions or incurring unnecessary fees.
+- **Versioned Vault Key Signing**: Transactions are signed using vault-managed keys with signing key version metadata recorded (`signing_key_versions`) for auditability. Private keys are never exposed in plaintext.
+- **Idempotency**: Duplicate grant requests surface a typed `DuplicatePermissionError` rather than double-writing state. Revoking an inactive permission is a safe no-op.
+- **Live State Queries**: `get()` and `list()` query live contract storage via Soroban RPC simulation.
+- **Spend Authorization**: `checkSpend()` validates remaining limits and expiration on-chain, alongside defense-in-depth checks against off-chain policies.
+
+### API Reference
+
+```typescript
+import { permissionsService, type PermissionGrant } from "./permissions/index.js";
+
+// Grant spending permission to a delegate agent
+const txHash = await permissionsService.grant({
+  contractId: "CDLZFC3...",
+  spender: "GDEMOSPENDER...",
+  limit: 10_000_000n, // in stroops (1 XLM)
+  expiresAt: "2026-12-31T23:59:59.000Z", // null for no expiry
+  owner: "GDEMOOWNER...",
+});
+
+// Check if a spend amount is authorized
+const isAuthorized = await permissionsService.checkSpend(
+  "CDLZFC3...",
+  "GDEMOOWNER...",
+  "GDEMOSPENDER...",
+  5_000_000n // amount in stroops
+);
+
+// Look up a specific grant
+const grant = await permissionsService.get(
+  "CDLZFC3...",
+  "GDEMOOWNER...",
+  "GDEMOSPENDER..."
+);
+
+// List all active grants for an owner
+const grants = await permissionsService.list("GDEMOOWNER...", "CDLZFC3...");
+
+// Revoke an active permission
+await permissionsService.revoke("CDLZFC3...", "GDEMOSPENDER...", "GDEMOOWNER...");
+```
+
+### Environment Variables
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `SOROBAN_PERMISSIONS_CONTRACT_ID` / `PERMISSIONS_CONTRACT_ID` | _(empty)_ | Default Soroban permissions contract ID |
+| `PERMISSIONS_OWNER_ADDRESS` | _(empty)_ | Default fallback wallet owner public address |
+| `SOROBAN_RPC_URL` / `STELLAR_RPC_URL` | `https://soroban-testnet.stellar.org` | Soroban RPC server endpoint |
+| `STELLAR_HORIZON_URL` | `https://horizon-testnet.stellar.org` | Horizon endpoint for sequence lookups |
+| `STELLAR_NETWORK` | `testnet` | Network identifier (`testnet`, `mainnet`, `futurenet`) |
+| `STELLAR_NETWORK_PASSPHRASE` | _(derived from network)_ | Passphrase for transaction signing |
+
+### Error Taxonomy
+
+| Error Class | Code | Status | Description |
+|---|---|---|---|
+| `PermissionNotFoundError` | `PERMISSION_NOT_FOUND` | 404 | Thrown by `checkSpend()` when no grant exists for the specified owner/spender pair. |
+| `PermissionExpiredError` | `PERMISSION_EXPIRED` | 400 | Thrown by `checkSpend()` when the delegation's `expiresAt` timestamp is in the past. |
+| `LimitExceededError` | `LIMIT_EXCEEDED` | 400 | Thrown by `checkSpend()` when the requested amount exceeds the granted limit or off-chain limit. |
+| `DuplicatePermissionError` | `DUPLICATE_PERMISSION` | 409 | Thrown by `grant()` when an identical active grant already exists on-chain. |
+| `SimulationFailedError` | `SIMULATION_FAILED` | 400 | Thrown by `grant()` or `revoke()` when pre-submit contract simulation fails. |
+| `InvalidPermissionInputError` | `INVALID_PERMISSION_INPUT` | 400 | Thrown on invalid addresses, negative limits, or malformed ISO dates. |
+| `PermissionError` | `PERMISSION_ERROR` | 400 | Base error class for domain-level permissions exceptions. |
+
+
