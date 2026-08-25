@@ -156,8 +156,12 @@ function assembleSimulationTransaction(
 ): Transaction {
   try {
     return rpc.assembleTransaction(tx, simRes as any).build();
-  } catch {
-    return tx;
+  } catch (err) {
+    throw new SimulationFailedError(
+      `Failed to assemble transaction from simulation: ${
+        err instanceof Error ? err.message : String(err)
+      }`
+    );
   }
 }
 
@@ -206,6 +210,12 @@ export interface PermissionGrantInput extends PermissionGrant {
   owner?: string;
 }
 
+export interface SpendPolicyContext {
+  userId?: string;
+  walletId?: string;
+  delegationId?: string | null;
+}
+
 export interface PermissionsServiceDeps {
   rpcUrl?: string;
   horizonUrl?: string;
@@ -222,6 +232,7 @@ export interface PermissionsServiceDeps {
     "simulateTransaction" | "detectFailureReasons"
   >;
   keySigner?: Pick<KeySigner, "sign" | "getPublicKey">;
+  checkSpendLimit?: typeof checkSpendLimit;
 }
 
 export interface PermissionsService {
@@ -242,7 +253,8 @@ export interface PermissionsService {
     contractId: string,
     owner: string,
     spender: string,
-    amount: bigint
+    amount: bigint,
+    policyContext?: SpendPolicyContext
   ): Promise<boolean>;
 }
 
@@ -321,9 +333,19 @@ export function createPermissionsService(
     try {
       const account = await horizonServer.loadAccount(address);
       return account.sequenceNumber();
-    } catch {
-      // Fallback for mock/test environments
-      return "1";
+    } catch (err) {
+      if (process.env.NODE_ENV === "test") return "1";
+      log.error("Failed to load account sequence", {
+        address,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      throw new PermissionError(
+        `Unable to load account sequence for ${address}: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+        "SEQUENCE_LOAD_FAILED",
+        502
+      );
     }
   }
 
@@ -353,6 +375,12 @@ export function createPermissionsService(
         // Non-fatal transient poll error, keep checking until timeout
       }
     }
+
+    throw new PermissionError(
+      `Transaction ${txHash} was not confirmed within the polling window`,
+      "TRANSACTION_UNCONFIRMED",
+      504
+    );
   }
 
   return {
@@ -380,7 +408,8 @@ export function createPermissionsService(
       const existing = await this.get(contractId, owner, spender);
       if (existing) {
         const isSameLimit = existing.limit === limit;
-        const isSameExpiry = existing.expiresAt === grantInput.expiresAt;
+        const isSameExpiry =
+          parseExpiryToSeconds(existing.expiresAt) === expirySeconds;
         if (isSameLimit && isSameExpiry) {
           throw new DuplicatePermissionError(
             `Permission grant already exists for spender ${spender} on contract ${contractId}`
@@ -688,7 +717,8 @@ export function createPermissionsService(
       contractIdInput: string,
       ownerInput: string,
       spenderInput: string,
-      amount: bigint
+      amount: bigint,
+      policyContext?: SpendPolicyContext
     ): Promise<boolean> {
       const owner = resolveOwner(ownerInput);
       const contractId = resolveContractId(contractIdInput);
@@ -728,24 +758,54 @@ export function createPermissionsService(
       }
 
       // 4. Off-chain defense-in-depth policy checks
-      try {
-        const offChain = await checkSpendLimit(
-          owner,
-          owner,
-          null,
-          amountBigInt
-        );
-        if (!offChain.allowed) {
-          throw new LimitExceededError(
-            `Off-chain spending limit policy rejected: ${offChain.reason ?? "limit exceeded"}`
+      let userId = policyContext?.userId;
+      let walletId = policyContext?.walletId;
+      const delegationId = policyContext?.delegationId ?? null;
+
+      if (!userId || !walletId) {
+        if (process.env.NODE_ENV !== "test" || process.env.DATABASE_URL) {
+          try {
+            const { Wallet } = await import("../src/models/Wallet.js");
+            const wallet = await Wallet.findOne({ where: { stellarAddress: owner } });
+            if (wallet) {
+              userId = userId || wallet.userId;
+              walletId = walletId || wallet.id;
+            }
+          } catch {
+            // Model/DB lookup not available in lightweight contexts
+          }
+        }
+      }
+
+      if (userId && walletId) {
+        try {
+          const spendLimitFn = deps.checkSpendLimit ?? checkSpendLimit;
+          const offChain = await spendLimitFn(
+            userId,
+            walletId,
+            delegationId,
+            amountBigInt
+          );
+          if (!offChain.allowed) {
+            throw new LimitExceededError(
+              `Off-chain spending limit policy rejected: ${offChain.reason ?? "limit exceeded"}`
+            );
+          }
+        } catch (err: unknown) {
+          if (err instanceof LimitExceededError) throw err;
+          log.error("Off-chain policy check failed", {
+            error: err instanceof Error ? err.message : String(err),
+            userId,
+            walletId,
+          });
+          throw new PermissionError(
+            `Unable to evaluate off-chain spending policy: ${
+              err instanceof Error ? err.message : String(err)
+            }`,
+            "POLICY_CHECK_UNAVAILABLE",
+            503
           );
         }
-      } catch (err: unknown) {
-        if (err instanceof LimitExceededError) throw err;
-        log.warn(
-          "Off-chain policy check failed or skipped, relying on on-chain authorization",
-          { error: err instanceof Error ? err.message : String(err) }
-        );
       }
 
       return true;
@@ -753,4 +813,30 @@ export function createPermissionsService(
   };
 }
 
-export const permissionsService: PermissionsService = createPermissionsService();
+let defaultPermissionsServiceInstance: PermissionsService | null = null;
+
+function getDefaultPermissionsService(): PermissionsService {
+  if (!defaultPermissionsServiceInstance) {
+    defaultPermissionsServiceInstance = createPermissionsService();
+  }
+  return defaultPermissionsServiceInstance;
+}
+
+export const permissionsService: PermissionsService = {
+  grant(...args) {
+    return getDefaultPermissionsService().grant(...args);
+  },
+  revoke(...args) {
+    return getDefaultPermissionsService().revoke(...args);
+  },
+  list(...args) {
+    return getDefaultPermissionsService().list(...args);
+  },
+  get(...args) {
+    return getDefaultPermissionsService().get(...args);
+  },
+  checkSpend(...args) {
+    return getDefaultPermissionsService().checkSpend(...args);
+  },
+};
+

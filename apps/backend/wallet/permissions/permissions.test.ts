@@ -72,6 +72,14 @@ describe("PermissionsService — Soroban permissions contract client", () => {
     };
   });
 
+  function makeSuccessSimulation() {
+    return {
+      minResourceFee: "1000",
+      transactionData: new SorobanDataBuilder().build(),
+      results: [{ auth: [], xdr: nativeToScVal(true).toXDR("base64") }],
+    };
+  }
+
   function createService(overrides?: Record<string, any>) {
     return createPermissionsService({
       rpcUrl: "https://soroban-testnet.stellar.org",
@@ -95,11 +103,7 @@ describe("PermissionsService — Soroban permissions contract client", () => {
       });
 
       // 2. Simulator simulation succeeds
-      const simResponse = {
-        minResourceFee: "1000",
-        transactionData: new SorobanDataBuilder().build(),
-      };
-      mockSimulator.simulateTransaction.mockResolvedValueOnce(simResponse);
+      mockSimulator.simulateTransaction.mockResolvedValueOnce(makeSuccessSimulation());
 
       const service = createService();
       const expiresAt = new Date(Date.now() + 86400000).toISOString();
@@ -181,6 +185,91 @@ describe("PermissionsService — Soroban permissions contract client", () => {
       expect(mockRpcServer.sendTransaction).not.toHaveBeenCalled();
     });
 
+    it("throws DuplicatePermissionError when identical grant exists even with different ISO string formatting", async () => {
+      const expiresAt = "2026-12-31T23:59:59.000Z";
+      const existingRetval = nativeToScVal({
+        delegator: owner,
+        delegate: spender,
+        limit: 5_000_000n,
+        spent: 0n,
+        expiry: BigInt(Math.floor(new Date(expiresAt).getTime() / 1000)),
+      });
+
+      // get returns existing identical grant
+      mockRpcServer.simulateTransaction.mockResolvedValueOnce({
+        result: { retval: existingRetval },
+      });
+
+      const service = createService();
+      // Pass ISO without milliseconds but same unix timestamp
+      await expect(
+        service.grant({
+          contractId,
+          spender,
+          limit: 5_000_000n,
+          expiresAt: "2026-12-31T23:59:59Z",
+          owner,
+        })
+      ).rejects.toThrow(DuplicatePermissionError);
+    });
+
+    it("throws SimulationFailedError when assembleTransaction fails", async () => {
+      mockSimulator.simulateTransaction.mockResolvedValueOnce({
+        // Invalid transactionData causing assembly failure
+        minResourceFee: "1000",
+        transactionData: "INVALID_TRANSACTION_DATA",
+      });
+
+      const service = createService();
+      await expect(
+        service.grant({
+          contractId,
+          spender,
+          limit: 5_000_000n,
+          expiresAt: null,
+          owner,
+        })
+      ).rejects.toThrow(SimulationFailedError);
+    });
+
+    it("throws PermissionError when polling confirmation times out", async () => {
+      mockSimulator.simulateTransaction.mockResolvedValueOnce(makeSuccessSimulation());
+      mockRpcServer.getTransaction
+        .mockResolvedValueOnce({ status: "NOT_FOUND" })
+        .mockResolvedValueOnce({ status: "NOT_FOUND" });
+
+      const service = createService();
+      await expect(
+        service.grant({
+          contractId,
+          spender,
+          limit: 5_000_000n,
+          expiresAt: null,
+          owner,
+        })
+      ).rejects.toThrow(/was not confirmed within the polling window/);
+    });
+
+    it("throws PermissionError when sequence number loading fails outside test environment", async () => {
+      const origEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = "production";
+      try {
+        mockHorizonServer.loadAccount.mockRejectedValueOnce(new Error("Horizon 500"));
+        const service = createService();
+        await expect(
+          service.grant({
+            contractId,
+            spender,
+            limit: 5_000_000n,
+            expiresAt: null,
+            owner,
+          })
+        ).rejects.toThrow(/Unable to load account sequence/);
+      } finally {
+        process.env.NODE_ENV = origEnv;
+      }
+    });
+
     it("allows updating grant when limit or expiry changes", async () => {
       const existingRetval = nativeToScVal({
         delegator: owner,
@@ -195,10 +284,7 @@ describe("PermissionsService — Soroban permissions contract client", () => {
         result: { retval: existingRetval },
       });
 
-      mockSimulator.simulateTransaction.mockResolvedValueOnce({
-        minResourceFee: "1000",
-        transactionData: new SorobanDataBuilder().build(),
-      });
+      mockSimulator.simulateTransaction.mockResolvedValueOnce(makeSuccessSimulation());
 
       const service = createService();
       const txHash = await service.grant({
@@ -264,10 +350,7 @@ describe("PermissionsService — Soroban permissions contract client", () => {
       });
 
       // 2. Simulation succeeds
-      mockSimulator.simulateTransaction.mockResolvedValueOnce({
-        minResourceFee: "1000",
-        transactionData: new SorobanDataBuilder().build(),
-      });
+      mockSimulator.simulateTransaction.mockResolvedValueOnce(makeSuccessSimulation());
 
       const service = createService();
       await service.revoke(contractId, spender, owner);
@@ -495,8 +578,56 @@ describe("PermissionsService — Soroban permissions contract client", () => {
 
       const service = createService();
       await expect(
-        service.checkSpend(contractId, owner, spender, 5_000_000n)
+        service.checkSpend(contractId, owner, spender, 5_000_000n, {
+          userId: "usr-123",
+          walletId: "wal-456",
+          delegationId: "del-789",
+        })
       ).rejects.toThrow(LimitExceededError);
+
+      expect(checkSpendLimit).toHaveBeenCalledWith(
+        "usr-123",
+        "wal-456",
+        "del-789",
+        5_000_000n
+      );
+    });
+
+    it("fails closed and throws PermissionError when off-chain policy check encounters an unexpected error", async () => {
+      const { checkSpendLimit } = await import("../src/spendLimits.js");
+      (checkSpendLimit as any).mockRejectedValueOnce(
+        new Error("Redis connection timed out")
+      );
+
+      const retval = nativeToScVal({
+        delegator: owner,
+        delegate: spender,
+        limit: 10_000_000n,
+        expiry: 0n,
+      });
+
+      mockRpcServer.simulateTransaction.mockResolvedValueOnce({
+        result: { retval },
+      });
+
+      const service = createService();
+      await expect(
+        service.checkSpend(contractId, owner, spender, 5_000_000n, {
+          userId: "usr-123",
+          walletId: "wal-456",
+        })
+      ).rejects.toThrow(/Unable to evaluate off-chain spending policy/);
+    });
+  });
+
+  describe("Lazy permissionsService singleton", () => {
+    it("delegates methods on demand via the permissionsService proxy", async () => {
+      const { permissionsService } = await import("./index.js");
+      expect(typeof permissionsService.grant).toBe("function");
+      expect(typeof permissionsService.revoke).toBe("function");
+      expect(typeof permissionsService.list).toBe("function");
+      expect(typeof permissionsService.get).toBe("function");
+      expect(typeof permissionsService.checkSpend).toBe("function");
     });
   });
 });
