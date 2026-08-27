@@ -1,7 +1,8 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { route, json, type Route } from "@delegolabs/utils";
+import { route, json, createHealthRoutes, type Route } from "@delegolabs/utils";
 import { escrowService } from "../escrow/index.js";
 import { getPaymentsHealth } from "../escrow/health.js";
+import { createPaymentsHealthRegistry } from "./health.js";
 import { handleDeliveryConfirmationWebhook } from "../escrow/autoSettlement.js";
 import {
   acquireLock,
@@ -14,6 +15,8 @@ import {
   validateReleaseRequest,
   type ValidationError,
 } from "./validation.js";
+
+const paymentsHealthRegistry = createPaymentsHealthRegistry();
 
 async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
@@ -72,6 +75,12 @@ async function ensureContractConfig(res: ServerResponse): Promise<boolean> {
 
 export function registerRoutes(): Route[] {
   return [
+    ...createHealthRoutes({
+      registry: paymentsHealthRegistry,
+      serviceName: "payments",
+      version: "0.0.1",
+    }),
+
     route("GET", "/escrow/health", async (_req, res) => {
       const health = await getPaymentsHealth();
       json(res, 200, { data: health, error: null });

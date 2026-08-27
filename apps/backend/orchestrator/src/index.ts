@@ -2,8 +2,9 @@
  * @delegolabs/orchestrator — Workflow coordination
  * #64 Purchase Recovery Engine — reconcileWorkflows compares DB state with on-chain escrow.
  */
-import { createLogger, json, route, startHttpServer } from "@delegolabs/utils";
+import { createLogger, json, route, startHttpServer, createHealthRoutes } from "@delegolabs/utils";
 import { Pool } from "pg";
+import { createOrchestratorHealthRegistry } from "./health.js";
 import {
   createWorkflow,
   transitionWorkflow,
@@ -27,12 +28,7 @@ const port = Number(process.env.ORCHESTRATOR_PORT ?? DEFAULT_PORT);
 
 const sagaStore = new PostgresSagaStore();
 const checkoutSagaCoordinator = createCheckoutSagaCoordinator(sagaStore);
-
-startHttpServer({
-  port,
-  serviceName: SERVICE_NAME,
-  routes: [],
-});
+const orchestratorHealthRegistry = createOrchestratorHealthRegistry();
 
 // ─── #64 Reconciliation Engine ───────────────────────────────────────────────
 
@@ -379,6 +375,12 @@ async function main(): Promise<void> {
     port,
     serviceName: SERVICE_NAME,
     routes: [
+      ...createHealthRoutes({
+        registry: orchestratorHealthRegistry,
+        serviceName: SERVICE_NAME,
+        version: "0.0.1",
+      }),
+
       route("POST", "/checkout", async (req, res) => {
         let body: Record<string, unknown>;
         try {

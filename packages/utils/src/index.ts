@@ -26,3 +26,22 @@ export {
   type IsoDateParseResult,
   type ParseIsoDateOptions,
 } from "./parseIsoDate.js";
+export {
+  aggregateStatus,
+  createHealthRoutes,
+  HealthRegistry,
+  httpHealthCheck,
+  renderDashboard,
+  renderMetrics,
+  type CheckResult,
+  type DependencyConfig,
+  type DependencyType,
+  type HealthCheck,
+  type HealthCheckConfig,
+  type HealthCheckFn,
+  type HealthMetrics,
+  type HealthRouteOptions,
+  type HealthStatus,
+  type RegisterOptions,
+  type ServiceHealth,
+} from "./health/index.js";
