@@ -1,31 +1,46 @@
 import type { IncomingMessage } from "node:http";
-import { route, json, isValidStellarPublicKey, validatePublicKeyMiddleware, type Route } from "@delegolabs/utils";
+import {
+  route,
+  json,
+  isValidStellarPublicKey,
+  validatePublicKeyMiddleware,
+  type Route,
+} from "@delegolabs/utils";
 import { accountService } from "../stellar/account.js";
 import { mergeAccount, previewMerge } from "../stellar/recovery.js";
 import { transactionService } from "../transactions/index.js";
 import { vaultService } from "./vault.js";
 import type { StellarNetwork } from "@delegolabs/types";
-import { Asset, Networks, Horizon, TransactionBuilder, Transaction } from "@stellar/stellar-sdk";
+import {
+  Asset,
+  Networks,
+  Horizon,
+  TransactionBuilder,
+  Transaction,
+} from "@stellar/stellar-sdk";
 import { getRedisConnection, getJobStatus } from "./queue/txQueue.js";
 import { createLogger } from "@delegolabs/utils";
+import { registerMultiSigRoutes } from "./multisig/routes.js";
+import { registerRecoveryRoutes } from "./recovery/routes.js";
+import { registerBatchingRoutes } from "./batching/routes.js";
 
 const log = createLogger("wallet:routes", process.env.LOG_LEVEL ?? "info");
 
 interface TokenBalance {
   assetCode: string;
   assetIssuer: string;
-  balance: string;                    // in stroops
-  balanceFormatted: string;           // with decimal places
-  contractId: string | null;          // Soroban token contract ID if SAC
+  balance: string; // in stroops
+  balanceFormatted: string; // with decimal places
+  contractId: string | null; // Soroban token contract ID if SAC
 }
 
 interface BalanceResponse {
   address: string;
   network: "testnet" | "mainnet";
-  nativeBalance: string;              // XLM in stroops
-  nativeBalanceFormatted: string;     // XLM with 7 decimal places
+  nativeBalance: string; // XLM in stroops
+  nativeBalanceFormatted: string; // XLM with 7 decimal places
   tokenBalances: TokenBalance[];
-  lastUpdated: string;                // ISO 8601
+  lastUpdated: string; // ISO 8601
 }
 
 interface TransactionEntry {
@@ -45,7 +60,7 @@ interface TransactionEntry {
 interface TransactionHistoryResponse {
   address: string;
   transactions: TransactionEntry[];
-  cursor: string | null;              // for pagination
+  cursor: string | null; // for pagination
   hasMore: boolean;
 }
 
@@ -68,7 +83,7 @@ async function readJsonBody<T>(req: IncomingMessage): Promise<T> {
     });
     req.on("end", () => {
       try {
-        resolve(body ? JSON.parse(body) as T : {} as T);
+        resolve(body ? (JSON.parse(body) as T) : ({} as T));
       } catch (err) {
         reject(new Error("Invalid JSON body"));
       }
@@ -113,7 +128,10 @@ export function registerRoutes(): Route[] {
         if (!account) {
           json(res, 404, {
             data: null,
-            error: { code: "NOT_FOUND", message: `Wallet not found: ${address}` },
+            error: {
+              code: "NOT_FOUND",
+              message: `Wallet not found: ${address}`,
+            },
           });
           return;
         }
@@ -150,7 +168,12 @@ export function registerRoutes(): Route[] {
           memo?: string;
         }>(req);
 
-        if (!body.sourceAddress || !body.contractId || !body.method || !body.args) {
+        if (
+          !body.sourceAddress ||
+          !body.contractId ||
+          !body.method ||
+          !body.args
+        ) {
           throw new Error("Missing required transaction simulation parameters");
         }
         if (!isValidStellarPublicKey(body.sourceAddress)) {
@@ -185,7 +208,12 @@ export function registerRoutes(): Route[] {
           memo?: string;
         }>(req);
 
-        if (!body.sourceAddress || !body.contractId || !body.method || !body.args) {
+        if (
+          !body.sourceAddress ||
+          !body.contractId ||
+          !body.method ||
+          !body.args
+        ) {
           throw new Error("Missing required transaction submission parameters");
         }
         if (!isValidStellarPublicKey(body.sourceAddress)) {
@@ -221,21 +249,30 @@ export function registerRoutes(): Route[] {
         if (!body.sourceAddress || !body.destinationAddress) {
           json(res, 400, {
             data: null,
-            error: { code: "BAD_REQUEST", message: "sourceAddress and destinationAddress are required" },
+            error: {
+              code: "BAD_REQUEST",
+              message: "sourceAddress and destinationAddress are required",
+            },
           });
           return;
         }
         if (!isValidStellarPublicKey(body.sourceAddress)) {
           json(res, 400, {
             data: null,
-            error: { code: "BAD_REQUEST", message: "Invalid source Stellar address format" },
+            error: {
+              code: "BAD_REQUEST",
+              message: "Invalid source Stellar address format",
+            },
           });
           return;
         }
         if (!isValidStellarPublicKey(body.destinationAddress)) {
           json(res, 400, {
             data: null,
-            error: { code: "BAD_REQUEST", message: "Invalid destination Stellar address format" },
+            error: {
+              code: "BAD_REQUEST",
+              message: "Invalid destination Stellar address format",
+            },
           });
           return;
         }
@@ -267,14 +304,20 @@ export function registerRoutes(): Route[] {
         if (!body.sourceAddress) {
           json(res, 400, {
             data: null,
-            error: { code: "BAD_REQUEST", message: "sourceAddress is required" },
+            error: {
+              code: "BAD_REQUEST",
+              message: "sourceAddress is required",
+            },
           });
           return;
         }
         if (!isValidStellarPublicKey(body.sourceAddress)) {
           json(res, 400, {
             data: null,
-            error: { code: "BAD_REQUEST", message: "Invalid Stellar address format" },
+            error: {
+              code: "BAD_REQUEST",
+              message: "Invalid Stellar address format",
+            },
           });
           return;
         }
@@ -295,125 +338,164 @@ export function registerRoutes(): Route[] {
     }),
 
     // Get native XLM and token balances
-    route("GET", "/api/v1/wallet/:address/balance", async (_req, res, params) => {
-      try {
-        await validateAddress(_req, res, params);
-        if (res.writableEnded) return;
-
-        const address = params.address;
-
-        if (!isValidStellarPublicKey(address)) {
-          json(res, 400, {
-            data: null,
-            error: { code: "BAD_REQUEST", message: "Invalid Stellar address format" },
-          });
-          return;
-        }
-
-        const network = (process.env.STELLAR_NETWORK ?? "testnet").toLowerCase() as "testnet" | "mainnet";
-        const horizonUrl = network === "mainnet"
-          ? (process.env.STELLAR_HORIZON_URL ?? "https://horizon.stellar.org")
-          : (process.env.STELLAR_HORIZON_URL ?? "https://horizon-testnet.stellar.org");
-        const networkPassphrase = network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
-
-        const redis = getRedisConnection();
-        const cacheKey = `cache:balance:${address}`;
-        
+    route(
+      "GET",
+      "/api/v1/wallet/:address/balance",
+      async (_req, res, params) => {
         try {
-          const cached = await redis.get(cacheKey);
-          if (cached) {
-            res.writeHead(200, { "Content-Type": "application/json" });
-            res.end(cached);
-            return;
-          }
-        } catch (cacheErr: any) {
-          log.warn("Redis read failed during balance query", { error: cacheErr.message });
-        }
+          await validateAddress(_req, res, params);
+          if (res.writableEnded) return;
 
-        const server = new Horizon.Server(horizonUrl);
-        let account;
-        try {
-          account = await server.loadAccount(address);
-        } catch (err: any) {
-          if (err.response?.status === 404) {
-            json(res, 404, {
+          const address = params.address;
+
+          if (!isValidStellarPublicKey(address)) {
+            json(res, 400, {
               data: null,
-              error: { code: "NOT_FOUND", message: "Account not found on the network" }
+              error: {
+                code: "BAD_REQUEST",
+                message: "Invalid Stellar address format",
+              },
             });
             return;
           }
-          if (err.response?.status === 429) {
-            const retryAfter = err.response?.headers?.["retry-after"] || "30";
-            res.writeHead(503, {
-              "Content-Type": "application/json",
-              "Retry-After": retryAfter
-            });
-            res.end(JSON.stringify({
-              data: null,
-              error: { code: "SERVICE_UNAVAILABLE", message: "Horizon server is currently rate limiting requests" }
-            }));
-            return;
-          }
-          throw err;
-        }
 
-        const nativeBalanceLine = account.balances.find((b: any) => b.asset_type === "native");
-        const nativeBalance = nativeBalanceLine ? xlmToStroops(nativeBalanceLine.balance) : "0";
-        const nativeBalanceFormatted = nativeBalanceLine ? nativeBalanceLine.balance : "0.0000000";
+          const network = (
+            process.env.STELLAR_NETWORK ?? "testnet"
+          ).toLowerCase() as "testnet" | "mainnet";
+          const horizonUrl =
+            network === "mainnet"
+              ? (process.env.STELLAR_HORIZON_URL ??
+                "https://horizon.stellar.org")
+              : (process.env.STELLAR_HORIZON_URL ??
+                "https://horizon-testnet.stellar.org");
+          const networkPassphrase =
+            network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
 
-        const tokenBalances: TokenBalance[] = [];
-        for (const b of account.balances) {
-          if (b.asset_type === "native" || b.asset_type === "liquidity_pool_shares") {
-            continue;
-          }
-          const code = b.asset_code;
-          const issuer = b.asset_issuer;
-          
-          let contractId: string | null = null;
+          const redis = getRedisConnection();
+          const cacheKey = `cache:balance:${address}`;
+
           try {
-            const asset = new Asset(code, issuer);
-            contractId = asset.contractId(networkPassphrase);
-          } catch (err) {
-            log.error("Failed to compute contractId for asset", { code, issuer, error: err });
+            const cached = await redis.get(cacheKey);
+            if (cached) {
+              res.writeHead(200, { "Content-Type": "application/json" });
+              res.end(cached);
+              return;
+            }
+          } catch (cacheErr: any) {
+            log.warn("Redis read failed during balance query", {
+              error: cacheErr.message,
+            });
           }
 
-          tokenBalances.push({
-            assetCode: code,
-            assetIssuer: issuer,
-            balance: xlmToStroops(b.balance),
-            balanceFormatted: b.balance,
-            contractId
+          const server = new Horizon.Server(horizonUrl);
+          let account;
+          try {
+            account = await server.loadAccount(address);
+          } catch (err: any) {
+            if (err.response?.status === 404) {
+              json(res, 404, {
+                data: null,
+                error: {
+                  code: "NOT_FOUND",
+                  message: "Account not found on the network",
+                },
+              });
+              return;
+            }
+            if (err.response?.status === 429) {
+              const retryAfter = err.response?.headers?.["retry-after"] || "30";
+              res.writeHead(503, {
+                "Content-Type": "application/json",
+                "Retry-After": retryAfter,
+              });
+              res.end(
+                JSON.stringify({
+                  data: null,
+                  error: {
+                    code: "SERVICE_UNAVAILABLE",
+                    message:
+                      "Horizon server is currently rate limiting requests",
+                  },
+                }),
+              );
+              return;
+            }
+            throw err;
+          }
+
+          const nativeBalanceLine = account.balances.find(
+            (b: any) => b.asset_type === "native",
+          );
+          const nativeBalance = nativeBalanceLine
+            ? xlmToStroops(nativeBalanceLine.balance)
+            : "0";
+          const nativeBalanceFormatted = nativeBalanceLine
+            ? nativeBalanceLine.balance
+            : "0.0000000";
+
+          const tokenBalances: TokenBalance[] = [];
+          for (const b of account.balances) {
+            if (
+              b.asset_type === "native" ||
+              b.asset_type === "liquidity_pool_shares"
+            ) {
+              continue;
+            }
+            const code = b.asset_code;
+            const issuer = b.asset_issuer;
+
+            let contractId: string | null = null;
+            try {
+              const asset = new Asset(code, issuer);
+              contractId = asset.contractId(networkPassphrase);
+            } catch (err) {
+              log.error("Failed to compute contractId for asset", {
+                code,
+                issuer,
+                error: err,
+              });
+            }
+
+            tokenBalances.push({
+              assetCode: code,
+              assetIssuer: issuer,
+              balance: xlmToStroops(b.balance),
+              balanceFormatted: b.balance,
+              contractId,
+            });
+          }
+
+          const balanceResponse: BalanceResponse = {
+            address,
+            network,
+            nativeBalance,
+            nativeBalanceFormatted,
+            tokenBalances,
+            lastUpdated: new Date().toISOString(),
+          };
+
+          const responsePayload = { data: balanceResponse, error: null };
+          const responseString = JSON.stringify(responsePayload);
+
+          try {
+            await redis.set(cacheKey, responseString, "EX", 10);
+          } catch (cacheErr: any) {
+            log.warn("Redis write failed during balance query", {
+              error: cacheErr.message,
+            });
+          }
+
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(responseString);
+        } catch (err: any) {
+          log.error("GET balance error", { error: err.message });
+          json(res, 500, {
+            data: null,
+            error: { code: "INTERNAL_ERROR", message: err.message },
           });
         }
-
-        const balanceResponse: BalanceResponse = {
-          address,
-          network,
-          nativeBalance,
-          nativeBalanceFormatted,
-          tokenBalances,
-          lastUpdated: new Date().toISOString()
-        };
-
-        const responsePayload = { data: balanceResponse, error: null };
-        const responseString = JSON.stringify(responsePayload);
-
-        try {
-          await redis.set(cacheKey, responseString, "EX", 10);
-        } catch (cacheErr: any) {
-          log.warn("Redis write failed during balance query", { error: cacheErr.message });
-        }
-
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(responseString);
-      } catch (err: any) {
-        log.error("GET balance error", { error: err.message });
-        json(res, 500, {
-          data: null,
-          error: { code: "INTERNAL_ERROR", message: err.message }
-        });
-      }
-    }),
+      },
+    ),
 
     // Get queue job status by job ID
     route("GET", "/api/v1/queue/jobs/:jobId", async (_req, res, params) => {
@@ -422,7 +504,10 @@ export function registerRoutes(): Route[] {
         if (!jobId) {
           json(res, 400, {
             data: null,
-            error: { code: "BAD_REQUEST", message: "jobId parameter is required" },
+            error: {
+              code: "BAD_REQUEST",
+              message: "jobId parameter is required",
+            },
           });
           return;
         }
@@ -447,149 +532,205 @@ export function registerRoutes(): Route[] {
     }),
 
     // Get recent transaction history
-    route("GET", "/api/v1/wallet/:address/transactions", async (req, res, params) => {
-      try {
-        await validateAddress(req, res, params);
-        if (res.writableEnded) return;
-
-        const address = params.address;
-
-        const url = new URL(req.url ?? "", `http://${req.headers.host ?? "localhost"}`);
-        const cursorParam = url.searchParams.get("cursor");
-
-        const network = (process.env.STELLAR_NETWORK ?? "testnet").toLowerCase() as "testnet" | "mainnet";
-        const horizonUrl = network === "mainnet"
-          ? (process.env.STELLAR_HORIZON_URL ?? "https://horizon.stellar.org")
-          : (process.env.STELLAR_HORIZON_URL ?? "https://horizon-testnet.stellar.org");
-        const networkPassphrase = network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
-
-        const server = new Horizon.Server(horizonUrl);
-        
-        let txResponse;
+    route(
+      "GET",
+      "/api/v1/wallet/:address/transactions",
+      async (req, res, params) => {
         try {
-          // Verify account exists before retrieving history
-          await server.loadAccount(address);
-          
-          let builder = server.transactions().forAccount(address).limit(20).order("desc");
-          if (cursorParam) {
-            builder = builder.cursor(cursorParam);
-          }
-          txResponse = await builder.call();
-        } catch (err: any) {
-          if (err.response?.status === 404) {
-            json(res, 404, {
-              data: null,
-              error: { code: "NOT_FOUND", message: "Account not found on the network" }
-            });
-            return;
-          }
-          if (err.response?.status === 429) {
-            const retryAfter = err.response?.headers?.["retry-after"] || "30";
-            res.writeHead(503, {
-              "Content-Type": "application/json",
-              "Retry-After": retryAfter
-            });
-            res.end(JSON.stringify({
-              data: null,
-              error: { code: "SERVICE_UNAVAILABLE", message: "Horizon server is currently rate limiting requests" }
-            }));
-            return;
-          }
-          throw err;
-        }
+          await validateAddress(req, res, params);
+          if (res.writableEnded) return;
 
-        const transactions: TransactionEntry[] = txResponse.records.map((tx: any) => {
-          let operations: any[] = [];
+          const address = params.address;
+
+          const url = new URL(
+            req.url ?? "",
+            `http://${req.headers.host ?? "localhost"}`,
+          );
+          const cursorParam = url.searchParams.get("cursor");
+
+          const network = (
+            process.env.STELLAR_NETWORK ?? "testnet"
+          ).toLowerCase() as "testnet" | "mainnet";
+          const horizonUrl =
+            network === "mainnet"
+              ? (process.env.STELLAR_HORIZON_URL ??
+                "https://horizon.stellar.org")
+              : (process.env.STELLAR_HORIZON_URL ??
+                "https://horizon-testnet.stellar.org");
+          const networkPassphrase =
+            network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
+
+          const server = new Horizon.Server(horizonUrl);
+
+          let txResponse;
           try {
-            const parsedTx = TransactionBuilder.fromXDR(tx.envelope_xdr, networkPassphrase);
-            if (parsedTx instanceof Transaction) {
-              operations = parsedTx.operations;
-            } else if ("innerTransaction" in parsedTx) {
-              operations = parsedTx.innerTransaction.operations;
+            // Verify account exists before retrieving history
+            await server.loadAccount(address);
+
+            let builder = server
+              .transactions()
+              .forAccount(address)
+              .limit(20)
+              .order("desc");
+            if (cursorParam) {
+              builder = builder.cursor(cursorParam);
             }
-          } catch (err) {
-            log.error("Failed to parse transaction XDR", { hash: tx.hash, error: err });
+            txResponse = await builder.call();
+          } catch (err: any) {
+            if (err.response?.status === 404) {
+              json(res, 404, {
+                data: null,
+                error: {
+                  code: "NOT_FOUND",
+                  message: "Account not found on the network",
+                },
+              });
+              return;
+            }
+            if (err.response?.status === 429) {
+              const retryAfter = err.response?.headers?.["retry-after"] || "30";
+              res.writeHead(503, {
+                "Content-Type": "application/json",
+                "Retry-After": retryAfter,
+              });
+              res.end(
+                JSON.stringify({
+                  data: null,
+                  error: {
+                    code: "SERVICE_UNAVAILABLE",
+                    message:
+                      "Horizon server is currently rate limiting requests",
+                  },
+                }),
+              );
+              return;
+            }
+            throw err;
           }
 
-          const op = operations[0];
-          let type: "payment" | "contract_invocation" | "create_account" | "other" = "other";
-          let direction: "incoming" | "outgoing" = "outgoing";
-          let amount: string | null = null;
-          let assetCode: string | null = null;
-          let counterparty: string | null = null;
+          const transactions: TransactionEntry[] = txResponse.records.map(
+            (tx: any) => {
+              let operations: any[] = [];
+              try {
+                const parsedTx = TransactionBuilder.fromXDR(
+                  tx.envelope_xdr,
+                  networkPassphrase,
+                );
+                if (parsedTx instanceof Transaction) {
+                  operations = parsedTx.operations;
+                } else if ("innerTransaction" in parsedTx) {
+                  operations = parsedTx.innerTransaction.operations;
+                }
+              } catch (err) {
+                log.error("Failed to parse transaction XDR", {
+                  hash: tx.hash,
+                  error: err,
+                });
+              }
 
-          if (op) {
-            if (op.type === "payment" || op.type === "pathPaymentStrictReceive" || op.type === "pathPaymentStrictSend") {
-              type = "payment";
-              amount = op.amount ? xlmToStroops(op.amount) : null;
-              if (op.asset) {
-                assetCode = op.asset.isNative() ? "XLM" : op.asset.getCode();
-              }
-              if (op.destination === address) {
-                direction = "incoming";
-                counterparty = op.source || tx.source_account;
-              } else {
-                direction = "outgoing";
-                counterparty = op.destination;
-              }
-            } else if (op.type === "createAccount") {
-              type = "create_account";
-              amount = op.startingBalance ? xlmToStroops(op.startingBalance) : null;
-              assetCode = "XLM";
-              if (op.destination === address) {
-                direction = "incoming";
-                counterparty = op.source || tx.source_account;
-              } else {
-                direction = "outgoing";
-                counterparty = op.destination;
-              }
-            } else if (op.type === "invokeHostFunction") {
-              type = "contract_invocation";
-              direction = tx.source_account === address ? "outgoing" : "incoming";
-              counterparty = op.source || tx.source_account;
-            } else {
-              type = "other";
-              direction = tx.source_account === address ? "outgoing" : "incoming";
-              counterparty = op.source || tx.source_account;
-            }
-          } else {
-            direction = tx.source_account === address ? "outgoing" : "incoming";
-          }
+              const op = operations[0];
+              let type:
+                "payment" | "contract_invocation" | "create_account" | "other" =
+                "other";
+              let direction: "incoming" | "outgoing" = "outgoing";
+              let amount: string | null = null;
+              let assetCode: string | null = null;
+              let counterparty: string | null = null;
 
-          return {
-            id: tx.id,
-            hash: tx.hash,
-            ledger: tx.ledger_attr || tx.ledger,
-            type,
-            direction,
-            amount,
-            assetCode,
-            counterparty,
-            memo: tx.memo || null,
-            timestamp: tx.created_at,
-            successful: tx.successful
+              if (op) {
+                if (
+                  op.type === "payment" ||
+                  op.type === "pathPaymentStrictReceive" ||
+                  op.type === "pathPaymentStrictSend"
+                ) {
+                  type = "payment";
+                  amount = op.amount ? xlmToStroops(op.amount) : null;
+                  if (op.asset) {
+                    assetCode = op.asset.isNative()
+                      ? "XLM"
+                      : op.asset.getCode();
+                  }
+                  if (op.destination === address) {
+                    direction = "incoming";
+                    counterparty = op.source || tx.source_account;
+                  } else {
+                    direction = "outgoing";
+                    counterparty = op.destination;
+                  }
+                } else if (op.type === "createAccount") {
+                  type = "create_account";
+                  amount = op.startingBalance
+                    ? xlmToStroops(op.startingBalance)
+                    : null;
+                  assetCode = "XLM";
+                  if (op.destination === address) {
+                    direction = "incoming";
+                    counterparty = op.source || tx.source_account;
+                  } else {
+                    direction = "outgoing";
+                    counterparty = op.destination;
+                  }
+                } else if (op.type === "invokeHostFunction") {
+                  type = "contract_invocation";
+                  direction =
+                    tx.source_account === address ? "outgoing" : "incoming";
+                  counterparty = op.source || tx.source_account;
+                } else {
+                  type = "other";
+                  direction =
+                    tx.source_account === address ? "outgoing" : "incoming";
+                  counterparty = op.source || tx.source_account;
+                }
+              } else {
+                direction =
+                  tx.source_account === address ? "outgoing" : "incoming";
+              }
+
+              return {
+                id: tx.id,
+                hash: tx.hash,
+                ledger: tx.ledger_attr || tx.ledger,
+                type,
+                direction,
+                amount,
+                assetCode,
+                counterparty,
+                memo: tx.memo || null,
+                timestamp: tx.created_at,
+                successful: tx.successful,
+              };
+            },
+          );
+
+          const nextRecord = txResponse.records[txResponse.records.length - 1];
+          const nextCursor = nextRecord ? nextRecord.paging_token : null;
+          const hasMore = txResponse.records.length === 20;
+
+          const historyResponse: TransactionHistoryResponse = {
+            address,
+            transactions,
+            cursor: nextCursor,
+            hasMore,
           };
-        });
 
-        const nextRecord = txResponse.records[txResponse.records.length - 1];
-        const nextCursor = nextRecord ? nextRecord.paging_token : null;
-        const hasMore = txResponse.records.length === 20;
+          json(res, 200, { data: historyResponse, error: null });
+        } catch (err: any) {
+          log.error("GET transactions history error", { error: err.message });
+          json(res, 500, {
+            data: null,
+            error: { code: "INTERNAL_ERROR", message: err.message },
+          });
+        }
+      },
+    ),
 
-        const historyResponse: TransactionHistoryResponse = {
-          address,
-          transactions,
-          cursor: nextCursor,
-          hasMore
-        };
+    // --- Issue #44: Multi-sig routes ---
+    ...registerMultiSigRoutes(),
 
-        json(res, 200, { data: historyResponse, error: null });
-      } catch (err: any) {
-        log.error("GET transactions history error", { error: err.message });
-        json(res, 500, {
-          data: null,
-          error: { code: "INTERNAL_ERROR", message: err.message }
-        });
-      }
-    }),
+    // --- Issue #43: Social guardian recovery routes ---
+    ...registerRecoveryRoutes(),
+
+    // --- Issue #42: Transaction batching routes ---
+    ...registerBatchingRoutes(),
   ];
 }

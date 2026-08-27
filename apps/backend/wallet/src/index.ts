@@ -4,7 +4,10 @@
  */
 import { createLogger } from "@delegolabs/utils";
 import { startHttpServer } from "@delegolabs/utils";
-import { SorobanTransactionSimulator, readSorobanRpcConfig } from "./sorobanSimulator.js";
+import {
+  SorobanTransactionSimulator,
+  readSorobanRpcConfig,
+} from "./sorobanSimulator.js";
 
 const SERVICE_NAME = "wallet";
 const DEFAULT_PORT = 3012;
@@ -15,16 +18,29 @@ const log = createLogger(SERVICE_NAME, logLevel);
 const port = Number(process.env.WALLET_PORT ?? DEFAULT_PORT);
 
 const sorobanConfig = readSorobanRpcConfig();
-log.info("Starting service", { port, nodeEnv, sorobanRpcTimeoutMs: sorobanConfig.timeoutMs, sorobanRpcMaxRetries: sorobanConfig.maxRetries });
+log.info("Starting service", {
+  port,
+  nodeEnv,
+  sorobanRpcTimeoutMs: sorobanConfig.timeoutMs,
+  sorobanRpcMaxRetries: sorobanConfig.maxRetries,
+});
 
 export const sorobanSimulator = new SorobanTransactionSimulator(sorobanConfig);
 
 import { registerRoutes } from "./routes.js";
+import { startWebSocketServer } from "./websocket/server.js";
+import { startBatchFlushTimers } from "./batching/batchQueue.js";
 
 startHttpServer({
   port,
   serviceName: SERVICE_NAME,
   routes: registerRoutes(),
 });
+
+// Issue #41: Start WebSocket server on port 3013
+startWebSocketServer();
+
+// Issue #42: Start background batch flush timers
+startBatchFlushTimers();
 
 // TODO: Wire routes, database, and domain logic
