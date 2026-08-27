@@ -3,9 +3,13 @@ import { route, json, type Route } from "@delegolabs/utils";
 import { escrowService } from "../escrow/index.js";
 import { getPaymentsHealth } from "../escrow/health.js";
 import { handleDeliveryConfirmationWebhook } from "../escrow/autoSettlement.js";
+import { getWebhookSecret, verifyWebhookSignature, WEBHOOK_SIGNATURE_HEADER } from "./autoRelease/hmac.js";
+import { handleDeliveryConfirmation } from "./autoRelease/service.js";
+import { EscrowDisputedError, EscrowNotReleasableError } from "./autoRelease/types.js";
 import {
   acquireLock,
   releaseLock,
+  validateDeliveryConfirmation,
   validateDepositRequest,
   validateEscrowContractConfig,
   validateIdempotencyKey,
@@ -31,6 +35,17 @@ async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknow
     req.on("error", (err) => {
       reject(err);
     });
+  });
+}
+
+async function readRawBody(req: IncomingMessage): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+    req.on("end", () => resolve(body));
+    req.on("error", (err) => reject(err));
   });
 }
 
@@ -273,6 +288,67 @@ export function registerRoutes(): Route[] {
           return;
         }
         sendOperationError(res, "DELIVERY_WEBHOOK_FAILED", err);
+      }
+    }),
+
+    // Issue #45 — HMAC-verified delivery-confirmation webhook driving escrow auto-release.
+    route("POST", "/escrow/:escrowId/delivery-confirmed", async (req, res, params) => {
+      try {
+        const rawBody = await readRawBody(req);
+
+        const secret = getWebhookSecret();
+        if (!secret) {
+          json(res, 503, {
+            data: null,
+            error: { code: "CONFIG_ERROR", message: "ESCROW_WEBHOOK_SECRET is not configured" },
+          });
+          return;
+        }
+
+        const signatureHeaderRaw =
+          req.headers[WEBHOOK_SIGNATURE_HEADER] ?? req.headers["x-hub-signature-256"];
+        const signatureHeader = Array.isArray(signatureHeaderRaw) ? signatureHeaderRaw[0] : signatureHeaderRaw;
+
+        if (!verifyWebhookSignature(rawBody, signatureHeader, secret)) {
+          json(res, 401, {
+            data: null,
+            error: { code: "UNAUTHORIZED", message: "Invalid or missing webhook signature" },
+          });
+          return;
+        }
+
+        let body: Record<string, unknown>;
+        try {
+          body = rawBody ? (JSON.parse(rawBody) as Record<string, unknown>) : {};
+        } catch {
+          sendValidationError(res, { code: "VALIDATION_ERROR", message: "Invalid JSON body" });
+          return;
+        }
+
+        const validated = validateDeliveryConfirmation(body, params.escrowId);
+        if (!validated.ok) {
+          sendValidationError(res, validated.error);
+          return;
+        }
+
+        const result = await handleDeliveryConfirmation(validated.value);
+
+        if ("scheduled" in result) {
+          json(res, 202, { data: result, error: null });
+          return;
+        }
+
+        json(res, result.success ? 200 : 502, { data: result, error: null });
+      } catch (err) {
+        if (err instanceof EscrowDisputedError) {
+          json(res, 409, { data: null, error: { code: "ESCROW_DISPUTED", message: err.message } });
+          return;
+        }
+        if (err instanceof EscrowNotReleasableError) {
+          json(res, 400, { data: null, error: { code: "ESCROW_NOT_RELEASABLE", message: err.message } });
+          return;
+        }
+        sendOperationError(res, "DELIVERY_CONFIRMED_WEBHOOK_FAILED", err);
       }
     }),
   ];
