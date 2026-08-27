@@ -10,3 +10,7 @@ export * from "./wallet.js";
 export * from "./order.js";
 export * from "./agent.js";
 export * from "./api.js";
+export * from "./security.js";
+export * from "./coverage.js";
+export * from "./integration-testing.js";
+export * from "./e2e-testing.js";

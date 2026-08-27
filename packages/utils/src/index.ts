@@ -45,3 +45,7 @@ export {
   type RegisterOptions,
   type ServiceHealth,
 } from "./health/index.js";
+export * from "./pentest.js";
+export * from "./coverageGate.js";
+export * from "./integrationFixtures.js";
+export * from "./e2eRunner.js";
