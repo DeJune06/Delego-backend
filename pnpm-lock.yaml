@@ -337,6 +337,9 @@ importers:
 
   packages/utils:
     dependencies:
+      '@delegolabs/types':
+        specifier: workspace:*
+        version: link:../types
       '@stellar/stellar-sdk':
         specifier: ^15.1.0
         version: 15.1.0
@@ -351,10 +354,23 @@ importers:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@22.19.21)(jsdom@25.0.1)
 
-  tests/e2e: {}
+  tests/e2e:
+    dependencies:
+      '@delegolabs/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@delegolabs/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
 
   tests/integration:
     dependencies:
+      '@delegolabs/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@delegolabs/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@stellar/stellar-sdk':
         specifier: ^15.1.0
         version: 15.1.0

@@ -12,7 +12,7 @@
  */
 import * as crypto from "node:crypto";
 import { createLogger } from "@delegolabs/utils";
-import { estimateBatchGas } from "../batchSubmitter.js";
+
 import type {
   BatchTransactionRequest,
   BatchTransactionResponse,

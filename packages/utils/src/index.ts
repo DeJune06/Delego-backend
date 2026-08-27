@@ -26,3 +26,7 @@ export {
   type IsoDateParseResult,
   type ParseIsoDateOptions,
 } from "./parseIsoDate.js";
+export * from "./pentest.js";
+export * from "./coverageGate.js";
+export * from "./integrationFixtures.js";
+export * from "./e2eRunner.js";
