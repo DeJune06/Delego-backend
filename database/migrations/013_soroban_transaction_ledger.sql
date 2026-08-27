@@ -1,4 +1,4 @@
--- Migration: 011_soroban_transaction_ledger
+-- Migration: 013_soroban_transaction_ledger
 -- Description: Idempotent Soroban transaction ledger for tracking submission, confirmation, and failure states
 
 CREATE TABLE IF NOT EXISTS soroban_transaction_ledger (

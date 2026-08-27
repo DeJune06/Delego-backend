@@ -5,6 +5,7 @@ Thank you for your interest in contributing to Delego! We welcome contributions 
 ## 📋 Table of Contents
 
 - [Getting Started](#getting-started)
+- [Database Migrations](#database-migrations)
 - [Development Workflow](#development-workflow)
 - [Code Standards](#code-standards)
 - [Project Areas](#project-areas)
@@ -64,6 +65,52 @@ Before you begin contributing, ensure you have the following installed:
    ```
 
 For detailed setup instructions, see [docs/contributor-guide.md](./docs/contributor-guide.md).
+
+## 🗄️ Database Migrations
+
+Schema changes are managed by the deterministic migration runner in `scripts/setup/migrate.js`. See [database/migrations/README.md](./database/migrations/README.md) for full details.
+
+- `database/schema/` is the immutable baseline applied to a new database; `database/migrations/` holds incremental changes.
+- Files run in numeric-prefix order, then filename. Every file is tracked by filename and SHA-256 checksum in `schema_migrations`.
+- Applied migrations are skipped on reruns (a second `pnpm db:migrate` is a no-op).
+- **Never edit an applied migration file.** Checksum drift fails every subsequent migration run — create a new migration instead.
+
+### Fresh database setup
+
+```bash
+docker compose down -v
+docker compose up -d --wait postgres
+pnpm db:migrate
+pnpm db:migrate:status
+```
+
+A clean environment must contain all expected tables before services start.
+
+### Checking migration status
+
+```bash
+pnpm db:migrate:status
+```
+
+Lists applied and pending migrations plus checksum-drift errors, and exits non-zero when metadata is inconsistent.
+
+### Running migration tests
+
+```bash
+docker compose up -d --wait postgres
+pnpm test:integration
+```
+
+The integration suite covers fresh setup, no-op reruns, status output, checksum drift, duplicate versions, and deterministic ordering against disposable databases. Tests are skipped automatically when no PostgreSQL is reachable.
+
+### Before opening a PR
+
+```bash
+find database/migrations -maxdepth 1 -type f -name '*.sql' \
+  | sed -E 's#.*/([0-9]+)_.*#\1#' | sort | uniq -d
+```
+
+This must print nothing — duplicate version numbers fail CI. Also verify a clean Docker environment migrates end-to-end (`docker compose down -v && docker compose up -d --wait postgres && pnpm db:migrate`) and that `git diff` does not modify existing migration files.
 
 ## 🔄 Development Workflow
 

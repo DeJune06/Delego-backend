@@ -73,6 +73,24 @@ jobs:
     timeout-minutes: 15
     needs: [lint, type-check]
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: delego
+          POSTGRES_PASSWORD: delego
+          POSTGRES_DB: delego
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U delego -d delego"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://delego:delego@localhost:5432/delego
+
     steps:
       - uses: actions/checkout@v4
 
@@ -95,11 +113,54 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+  migrations:
+    name: Database Migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [lint, type-check]
+
+    env:
+      DATABASE_URL: postgresql://delego:delego@localhost:5432/delego
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start clean PostgreSQL
+        run: docker compose up -d --wait postgres
+
+      - name: Apply all migrations
+        run: pnpm db:migrate
+
+      - name: Check migration status
+        run: pnpm db:migrate:status
+
+      - name: Verify second migration run is a no-op
+        run: |
+          pnpm db:migrate | tee /tmp/migrate-second-run.log
+          grep -q "nothing to do" /tmp/migrate-second-run.log
+          grep -q "0 pending" /tmp/migrate-second-run.log
+
+      - name: Run migration integration tests
+        run: pnpm test:integration
+
   build:
     name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [test]
+    needs: [test, migrations]
 
     steps:
       - uses: actions/checkout@v4
