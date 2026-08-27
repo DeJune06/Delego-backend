@@ -85,7 +85,11 @@ const RefreshResponse = ApiResponse({
   type: "object",
   properties: {
     accessToken: { type: "string" },
+    refreshToken: { type: "string", description: "New rotated refresh token" },
     expiresIn: { type: "number" },
+    refreshExpiresIn: { type: "number" },
+    tokenType: { type: "string", enum: ["Bearer"] },
+    scope: { type: "string" },
   },
 });
 
@@ -95,6 +99,44 @@ const LogoutResponse = ApiResponse({
     success: { type: "boolean" },
   },
 });
+
+const IntrospectionResponse = ApiResponse({
+  type: "object",
+  properties: {
+    active: { type: "boolean" },
+    tokenType: { type: ["string", "null"] },
+    jti: { type: ["string", "null"] },
+    userId: { type: ["string", "null"] },
+    email: { type: ["string", "null"] },
+    scope: { type: ["string", "null"] },
+    iat: { type: ["integer", "null"] },
+    exp: { type: ["integer", "null"] },
+    nbf: { type: ["integer", "null"] },
+    iss: { type: ["string", "null"] },
+    aud: { type: ["string", "null"] },
+    deviceId: { type: ["string", "null"] },
+  },
+});
+
+const JwksResponse = {
+  type: "object",
+  properties: {
+    keys: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          kty: { type: "string" },
+          kid: { type: "string" },
+          use: { type: "string" },
+          alg: { type: "string" },
+          n: { type: "string" },
+          e: { type: "string" },
+        },
+      },
+    },
+  },
+};
 
 // ---------------------------------------------------------------------------
 // Delegation schemas
@@ -387,6 +429,90 @@ export const openApiSpec = {
           "401": {
             description: "Not authenticated",
             content: { "application/json": { schema: ApiResponse(null) } },
+          },
+        },
+      },
+    },
+    "/api/v1/auth/introspect": {
+      post: {
+        tags: ["Auth"],
+        summary: "Introspect token",
+        description:
+          "RFC 7662-style introspection. Returns whether an access/refresh token is active and its claims.",
+        operationId: "introspectToken",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: { token: { type: "string" } },
+                required: ["token"],
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Introspection result",
+            content: { "application/json": { schema: IntrospectionResponse } },
+          },
+          "400": {
+            description: "Missing token",
+            content: { "application/json": { schema: ApiResponse(null) } },
+          },
+        },
+      },
+    },
+    "/api/v1/auth/revoke": {
+      post: {
+        tags: ["Auth"],
+        summary: "Revoke token(s)",
+        description:
+          "Blacklists an access token and/or refresh token and revokes the refresh-token family.",
+        operationId: "revokeTokens",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  token: { type: "string", description: "Access token to blacklist" },
+                  refreshToken: { type: "string", description: "Refresh token to blacklist + family revoke" },
+                  reason: {
+                    type: "string",
+                    enum: ["logout", "password_change", "security", "admin"],
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Tokens revoked",
+            content: { "application/json": { schema: ApiResponse(null) } },
+          },
+          "400": {
+            description: "Missing token or refreshToken",
+            content: { "application/json": { schema: ApiResponse(null) } },
+          },
+        },
+      },
+    },
+    "/api/v1/auth/.well-known/jwks.json": {
+      get: {
+        tags: ["Auth"],
+        summary: "JWKS",
+        description:
+          "JSON Web Key Set for verifying tokens issued by this gateway. Resource servers use the published public keys (RS256).",
+        operationId: "getJwks",
+        responses: {
+          "200": {
+            description: "JSON Web Key Set",
+            content: { "application/json": { schema: JwksResponse } },
           },
         },
       },
