@@ -51,7 +51,7 @@ const port = Number(process.env.PAYMENTS_PORT ?? DEFAULT_PORT);
 
 log.info("Starting service", { port, nodeEnv });
 
-startHttpServer({
+const server = startHttpServer({
   port,
   serviceName: SERVICE_NAME,
   routes: registerRoutes(),
@@ -60,13 +60,39 @@ startHttpServer({
 // ─── #358 Settlement Reconciliation ────────────────────────────────────────
 
 // Start periodic settlement reconciliation if enabled
+let stopScheduler: (() => void) | null = null;
 if (process.env.ENABLE_SETTLEMENT_RECONCILIATION !== "false") {
-  const stopScheduler = startReconciliationScheduler();
+  stopScheduler = startReconciliationScheduler();
+}
 
-  // Graceful shutdown
-  process.on("SIGTERM", () => {
-    log.info("SIGTERM received; stopping reconciliation scheduler");
-    stopScheduler();
+// ─── Graceful Shutdown ─────────────────────────────────────────────────────
+
+async function gracefulShutdown(signal: NodeJS.Signals): Promise<void> {
+  log.info("Received shutdown signal", { signal });
+
+  if (stopScheduler) {
+    try {
+      stopScheduler();
+      log.info("Reconciliation scheduler stopped");
+    } catch (err) {
+      log.error("Error stopping reconciliation scheduler", { error: (err as Error).message });
+    }
+  }
+
+  server.close(() => {
+    log.info("HTTP server closed");
+    process.exit(0);
+  });
+
+  setTimeout(() => {
+    log.warn("Force-exiting after shutdown timeout");
+    process.exit(0);
+  }, 10_000).unref();
+}
+
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.on(signal, () => {
+    void gracefulShutdown(signal);
   });
 }
 
