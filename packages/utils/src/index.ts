@@ -73,3 +73,27 @@ export {
   type QueryComplexityResult,
 } from "./graphqlComplexity.js";
 export { BatchLoader, type BatchFn } from "./batchLoader.js";
+export {
+  corsMiddleware,
+  securityHeadersMiddleware,
+  type CorsOptions,
+  type CorsRejectionLog,
+  type SecurityHeadersOptions,
+} from "./security.js";
+export {
+  RedisPubSubManager,
+  getRedisPubSubManager,
+  resetRedisPubSubManager,
+} from "./redis/index.js";
+export type {
+  PubSubChannel,
+  PubSubMessage,
+  PubSubSubscription,
+  PubSubMetrics,
+  PubSubHealth,
+  PubSubConfig,
+  DeadLetterMessage,
+  MessageHandler,
+  Serializer,
+  SerializationFormat,
+} from "./redis/types.js";
