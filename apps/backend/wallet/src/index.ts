@@ -3,7 +3,7 @@
  * TODO: Implement service logic
  */
 import { createLogger } from "@delegolabs/utils";
-import { startHttpServer } from "@delegolabs/utils";
+import { startHttpServer, corsMiddleware, securityHeadersMiddleware } from "@delegolabs/utils";
 import {
   SorobanTransactionSimulator,
   readSorobanRpcConfig,
@@ -34,6 +34,7 @@ import { startBatchFlushTimers } from "./batching/batchQueue.js";
 startHttpServer({
   port,
   serviceName: SERVICE_NAME,
+  middleware: [corsMiddleware(), securityHeadersMiddleware()],
   routes: registerRoutes(),
 });
 
