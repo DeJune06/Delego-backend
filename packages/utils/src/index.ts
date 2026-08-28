@@ -56,3 +56,20 @@ export {
   type CorsRejectionLog,
   type SecurityHeadersOptions,
 } from "./security.js";
+export {
+  RedisPubSubManager,
+  getRedisPubSubManager,
+  resetRedisPubSubManager,
+} from "./redis/index.js";
+export type {
+  PubSubChannel,
+  PubSubMessage,
+  PubSubSubscription,
+  PubSubMetrics,
+  PubSubHealth,
+  PubSubConfig,
+  DeadLetterMessage,
+  MessageHandler,
+  Serializer,
+  SerializationFormat,
+} from "./redis/types.js";

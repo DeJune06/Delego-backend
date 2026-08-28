@@ -7,6 +7,7 @@ import { handleDeliveryConfirmationWebhook } from "../escrow/autoSettlement.js";
 import { getWebhookSecret, verifyWebhookSignature, WEBHOOK_SIGNATURE_HEADER } from "./autoRelease/hmac.js";
 import { handleDeliveryConfirmation } from "./autoRelease/service.js";
 import { EscrowDisputedError, EscrowNotReleasableError } from "./autoRelease/types.js";
+import { getEscrowFundingLockManager } from "./escrowCoordinator/escrowFundingLock.js";
 import {
   acquireLock,
   releaseLock,
@@ -359,6 +360,26 @@ export function registerRoutes(): Route[] {
         }
         sendOperationError(res, "DELIVERY_CONFIRMED_WEBHOOK_FAILED", err);
       }
+    }),
+
+    // Issue #147 — Lock metrics and optimization endpoints
+    route("GET", "/escrow/lock/metrics", async (_req, res) => {
+      const lockManager = getEscrowFundingLockManager();
+      const metrics = lockManager.getMetrics("global");
+      const globalContention = lockManager.getGlobalContentionRatio();
+      json(res, 200, {
+        data: {
+          globalContentionRatio: globalContention,
+          metrics,
+        },
+        error: null,
+      });
+    }),
+
+    route("GET", "/escrow/lock/optimize", async (_req, res) => {
+      const lockManager = getEscrowFundingLockManager();
+      const optimization = lockManager.optimizeConfig();
+      json(res, 200, { data: optimization, error: null });
     }),
   ];
 }
