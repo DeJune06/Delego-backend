@@ -147,6 +147,11 @@ jobs:
       - name: Check migration status
         run: pnpm db:migrate:status
 
+      - name: Validate migration dry-run
+        run: |
+          pnpm db:migrate -- --dry-run --direction up | tee /tmp/migrate-dry-run.log
+          grep -q "nothing to do" /tmp/migrate-dry-run.log
+
       - name: Verify second migration run is a no-op
         run: |
           pnpm db:migrate | tee /tmp/migrate-second-run.log

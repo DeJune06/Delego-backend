@@ -2,7 +2,14 @@
  * @delegolabs/notifications — Entry point
  */
 import { createLogger, startHttpServer, route, json } from "@delegolabs/utils";
-import { initWebSocketServer } from "./websocket.js";
+import { broadcastNotificationToUser, getWebSocketMetrics, initWebSocketServer } from "./websocket.js";
+import { sequelize } from "./db.js";
+import {
+  bulkUpdateNotifications,
+  createNotification,
+  listNotifications,
+  type NotificationCategory,
+} from "./notificationStore.js";
 import {
   savePushSubscription,
   removePushSubscription,
@@ -26,6 +33,13 @@ const nodeEnv = process.env.NODE_ENV ?? "development";
 const logLevel = process.env.LOG_LEVEL ?? "info";
 const log = createLogger(SERVICE_NAME, logLevel);
 const port = Number(process.env.NOTIFICATIONS_PORT ?? DEFAULT_PORT);
+const notificationDb = {
+  async query(text: string, params: unknown[]) {
+    const [rows, metadata] = await sequelize.query(text, { bind: params });
+    const result = metadata as { rowCount?: number };
+    return { rows: rows as unknown[], rowCount: result.rowCount };
+  },
+};
 
 log.info("Starting service", { port, nodeEnv });
 
@@ -186,6 +200,55 @@ const server: Server = startHttpServer({
         json(res, 202, { data: { dispatched: true }, error: null });
       }
     ),
+
+    route("POST", "/notifications", async (req: IncomingMessage, res: ServerResponse) => {
+      const body = (await readBody(req)) as Record<string, unknown>;
+      if (!body.userId || !body.category || !body.type || !body.title || !body.message) {
+        json(res, 400, { data: null, error: { code: "BAD_REQUEST", message: "userId, category, type, title, and message are required" } });
+        return;
+      }
+      try {
+        const notification = await createNotification(notificationDb, {
+          userId: String(body.userId), category: body.category as NotificationCategory, type: String(body.type),
+          title: String(body.title), message: String(body.message), metadata: (body.metadata as Record<string, unknown>) ?? {},
+          actionUrl: body.actionUrl ? String(body.actionUrl) : undefined,
+          actionLabel: body.actionLabel ? String(body.actionLabel) : undefined,
+          imageUrl: body.imageUrl ? String(body.imageUrl) : undefined,
+          expiresAt: body.expiresAt ? String(body.expiresAt) : undefined,
+        });
+        broadcastNotificationToUser(notification.userId, { type: "notification", payload: notification as unknown as Record<string, unknown> });
+        json(res, 201, { data: notification, error: null });
+      } catch (err) {
+        json(res, 400, { data: null, error: { code: "NOTIFICATION_FAILED", message: err instanceof Error ? err.message : "Failed to create notification" } });
+      }
+    }),
+
+    route("GET", "/notifications/:userId", async (req: IncomingMessage, res: ServerResponse, params: Record<string, string>) => {
+      const url = new URL(req.url ?? "", "http://localhost");
+      const read = url.searchParams.get("read");
+      const archived = url.searchParams.get("archived");
+      const notifications = await listNotifications(notificationDb, {
+        userId: params.userId, category: (url.searchParams.get("category") as NotificationCategory | null) ?? undefined,
+        read: read === null ? undefined : read === "true", archived: archived === null ? undefined : archived === "true",
+        search: url.searchParams.get("search") ?? undefined, since: url.searchParams.get("since") ?? undefined,
+        limit: Number(url.searchParams.get("limit") ?? 50), offset: Number(url.searchParams.get("offset") ?? 0),
+      });
+      json(res, 200, { data: notifications, error: null });
+    }),
+
+    route("POST", "/notifications/:userId/bulk", async (req: IncomingMessage, res: ServerResponse, params: Record<string, string>) => {
+      const body = (await readBody(req)) as { ids?: unknown; action?: unknown };
+      if (!Array.isArray(body.ids) || !body.ids.every((id) => typeof id === "string") || !["read", "archive"].includes(String(body.action))) {
+        json(res, 400, { data: null, error: { code: "BAD_REQUEST", message: "ids and action (read or archive) are required" } });
+        return;
+      }
+      const updated = await bulkUpdateNotifications(notificationDb, params.userId, body.ids as string[], body.action as "read" | "archive");
+      json(res, 200, { data: { updated }, error: null });
+    }),
+
+    route("GET", "/ws/metrics", (_req: IncomingMessage, res: ServerResponse) => {
+      json(res, 200, { data: getWebSocketMetrics(), error: null });
+    }),
 
     // Issue #365 — notification scheduling with cron support.
     route("POST", "/schedule", async (req: IncomingMessage, res: ServerResponse) => {
