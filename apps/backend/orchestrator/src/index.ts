@@ -12,6 +12,7 @@ import {
   securityHeadersMiddleware,
 } from "@delegolabs/utils";
 import { Pool } from "pg";
+import { Redis } from "ioredis";
 import { createOrchestratorHealthRegistry } from "./health.js";
 import {
   createWorkflow,
@@ -25,6 +26,9 @@ import {
   type CheckoutWorkflowInput,
 } from "../workflows/checkout/index.js";
 import { connectSagaDb, PostgresSagaStore } from "./saga/index.js";
+import { startOutboxRelay, type OutboxRelayHandle } from "./events/outboxRelay.js";
+import { PostgresServiceEventOutboxStore } from "./events/postgres-service-event-outbox.js";
+import { setServiceEventOutboxStore } from "./events/service-event-outbox.js";
 
 const SERVICE_NAME = "orchestrator";
 const DEFAULT_PORT = 3010;
@@ -37,6 +41,15 @@ const port = Number(process.env.ORCHESTRATOR_PORT ?? DEFAULT_PORT);
 const sagaStore = new PostgresSagaStore();
 const checkoutSagaCoordinator = createCheckoutSagaCoordinator(sagaStore);
 const orchestratorHealthRegistry = createOrchestratorHealthRegistry();
+
+// ─── #33 Transactional Outbox Relay ──────────────────────────────────────────
+// Backs service_event_outbox writes (see workflows/purchase/index.ts transitionWorkflow)
+// with an actual Redis publisher, so events survive an orchestrator crash between the
+// DB commit and the publish. Disable with ENABLE_OUTBOX_RELAY=false (e.g. for a
+// single-purpose worker deployment that doesn't own delivery).
+const outboxPool = new Pool({ connectionString: process.env.DATABASE_URL });
+setServiceEventOutboxStore(new PostgresServiceEventOutboxStore(outboxPool));
+let outboxRelay: OutboxRelayHandle | null = null;
 
 // ─── #64 Reconciliation Engine ───────────────────────────────────────────────
 
@@ -378,6 +391,14 @@ async function main(): Promise<void> {
     log.warn("Failed to recover unfinished purchase workflows during startup", { error: (err as Error).message });
   }
 
+  if (process.env.ENABLE_OUTBOX_RELAY !== "false") {
+    const redisClient = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
+      lazyConnect: true,
+      maxRetriesPerRequest: 3,
+    });
+    outboxRelay = startOutboxRelay({ redisClient, log });
+  }
+
   log.info("Starting orchestrator", { port });
   startHttpServer({
     port,
@@ -560,6 +581,31 @@ main().catch((err) => {
   });
   process.exitCode = 1;
 });
+
+// ─── Graceful Shutdown ─────────────────────────────────────────────────────
+// Stops the OutboxRelay's poll loop and awaits its in-flight batch before the
+// process exits, so a deploy/restart never abandons a claimed-but-not-yet-published
+// batch — see events/outboxRelay.ts's stop() for the drain semantics.
+
+async function gracefulShutdown(signal: NodeJS.Signals): Promise<void> {
+  log.info("Received shutdown signal", { signal });
+
+  if (outboxRelay) {
+    try {
+      await outboxRelay.stop();
+    } catch (err) {
+      log.error("Error stopping outbox relay", { error: (err as Error).message });
+    }
+  }
+
+  process.exit(0);
+}
+
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.on(signal, () => {
+    void gracefulShutdown(signal);
+  });
+}
 
 // Export workflows and state machine for internal use (issue #7 & #54)
 export { RedisPublisher } from "./pubsub/index.js";
