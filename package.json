@@ -21,6 +21,8 @@
     "test:e2e": "pnpm --filter @delegolabs/tests-e2e test",
     "db:migrate": "node scripts/setup/migrate.js",
     "db:migrate:status": "node scripts/setup/migrate.js --status",
+    "db:migrate:dry-run": "node scripts/setup/migrate.js --dry-run",
+    "db:migrate:create": "node scripts/setup/migrate.js --create",
     "db:seed": "node scripts/setup/seed.js",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",

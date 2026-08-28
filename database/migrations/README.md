@@ -35,6 +35,7 @@ The incremental migrations are:
 | `013_soroban_transaction_ledger.sql` | Idempotent Soroban transaction ledger for submission, confirmation, and failure states |
 | `014_payment_records_dispute.sql` | Dispute transactions on payment_records for the escrow coordinator |
 | `015_oauth_providers.sql` | OAuth2 provider account linking |
+| `016_in_app_notifications.sql` | Durable in-app notifications and indexes (Issues #58/#60) |
 
 ## Naming rules
 
@@ -43,7 +44,7 @@ The incremental migrations are:
 ```
 
 - Numbers must be unique within their directory and must never be reused.
-- Only `.sql` files are treated as migrations; other files in these directories are ignored.
+- Only forward `.sql` files are treated as migrations; matching `.down.sql` files provide rollback SQL and are ignored as standalone migrations.
 - Filenames that do not match `<number>_<description>.sql` fail the migration run.
 
 ## Tracking
@@ -77,6 +78,18 @@ pnpm db:migrate
 
 # Show applied/pending migrations and checksum health
 pnpm db:migrate:status
+
+# Print pending SQL without executing it
+pnpm db:migrate:dry-run
+
+# Generate the next forward/rollback pair
+pnpm db:migrate:create add_example
+
+# Roll back the latest migration (requires an explicit safety flag)
+pnpm db:migrate -- --direction down --force
+
+# Inspect rollback SQL through version 12
+pnpm db:migrate -- --direction down --target 12 --dry-run
 ```
 
 The runner connects using `DATABASE_URL` (defaults to `postgresql://delego:delego@localhost:5432/delego`). For tests, `DELEGO_SCHEMA_DIR` and `DELEGO_MIGRATIONS_DIR` can override the migration directories.
@@ -100,4 +113,4 @@ A clean database must contain all expected tables before backend services are st
 5. Update this README's migration table.
 6. Never edit an applied migration file: the recorded SHA-256 checksum will no longer match and every subsequent `db:migrate`/`db:migrate:status` fails until the file is restored.
 
-Rollback is not currently supported; write new migrations to correct schema issues.
+Rollback runs the matching `.down.sql` in a transaction and removes its history row only after the SQL succeeds. A rollback without a down file, or without `--force`, is refused. Review a rollback with `--dry-run` before executing it; production rollback should also be approved through the deployment change process.

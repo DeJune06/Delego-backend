@@ -28,6 +28,17 @@ export interface PushNotificationEvent {
   publishedAt: string;
 }
 
+export interface WebSocketMetrics {
+  totalConnections: number;
+  authenticatedConnections: number;
+  messagesSent: number;
+  messagesReceived: number;
+  connectionsByUser: Record<string, number>;
+}
+
+let messagesSent = 0;
+let messagesReceived = 0;
+
 const connections = new Map<string, PushConnection>();
 const redisSubscriber = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", { lazyConnect: true });
 
@@ -64,6 +75,7 @@ function verifyJwt(token: string): { userId: string } | null {
 
 function sendMessage(ws: WebSocket, message: unknown) {
   ws.send(JSON.stringify(message));
+  messagesSent += 1;
 }
 
 function broadcastToTopic(topic: string, event: PushNotificationEvent) {
@@ -72,6 +84,39 @@ function broadcastToTopic(topic: string, event: PushNotificationEvent) {
       sendMessage(conn.ws, event);
     }
   }
+}
+
+export function broadcastNotificationToUser(
+  userId: string,
+  event: Omit<PushNotificationEvent, "topic" | "publishedAt"> & Partial<Pick<PushNotificationEvent, "publishedAt">>
+): void {
+  const notification: PushNotificationEvent = {
+    ...event,
+    topic: `user:${userId}`,
+    publishedAt: event.publishedAt ?? new Date().toISOString(),
+  };
+  broadcastToTopic(notification.topic, notification);
+}
+
+export function getWebSocketMetrics(): WebSocketMetrics {
+  const connectionsByUser: Record<string, number> = {};
+  for (const connection of connections.values()) {
+    connectionsByUser[connection.userId] = (connectionsByUser[connection.userId] ?? 0) + 1;
+  }
+  return {
+    totalConnections: connections.size,
+    authenticatedConnections: connections.size,
+    messagesSent,
+    messagesReceived,
+    connectionsByUser,
+  };
+}
+
+function broadcastPresence(userId: string, online: boolean): void {
+  broadcastNotificationToUser(userId, {
+    type: "presence",
+    payload: { userId, online },
+  });
 }
 
 function handleConnection(ws: WebSocket, req: IncomingMessage) {
@@ -103,6 +148,7 @@ function handleConnection(ws: WebSocket, req: IncomingMessage) {
   };
 
   connections.set(connectionId, connection);
+  broadcastPresence(decoded.userId, true);
 
   log.info("New WebSocket connection established", {
     connectionId,
@@ -129,6 +175,7 @@ function handleConnection(ws: WebSocket, req: IncomingMessage) {
   resetHeartbeat();
 
   ws.on("message", (data: import("ws").RawData) => {
+    messagesReceived += 1;
     try {
       const message = JSON.parse(data.toString());
 
@@ -171,6 +218,9 @@ function handleConnection(ws: WebSocket, req: IncomingMessage) {
       clearTimeout(connection.heartbeatTimeout);
     }
     connections.delete(connectionId);
+    if (![...connections.values()].some((item) => item.userId === decoded.userId)) {
+      broadcastPresence(decoded.userId, false);
+    }
   });
 
   ws.on("error", (err: Error) => {
