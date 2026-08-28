@@ -37,6 +37,7 @@ The incremental migrations are:
 | `015_oauth_providers.sql` | OAuth2 provider account linking |
 | `016_in_app_notifications.sql` | Durable in-app notifications and indexes (Issues #58/#60) |
 | `017_service_event_outbox_relay.sql` | Retry/claim columns on `service_event_outbox` for the OutboxRelay worker (Issue #33) |
+| `018_workflow_compensation_outcomes.sql` | Escrow compensation outcome per workflow record (Issue #35) |
 
 ## Naming rules
 

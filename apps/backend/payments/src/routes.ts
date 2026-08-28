@@ -7,6 +7,7 @@ import { handleDeliveryConfirmationWebhook } from "../escrow/autoSettlement.js";
 import { getWebhookSecret, verifyWebhookSignature, WEBHOOK_SIGNATURE_HEADER } from "./autoRelease/hmac.js";
 import { handleDeliveryConfirmation } from "./autoRelease/service.js";
 import { EscrowDisputedError, EscrowNotReleasableError } from "./autoRelease/types.js";
+import { settleOrder, refundOrder } from "../settlement/index.js";
 import {
   acquireLock,
   releaseLock,
@@ -15,6 +16,7 @@ import {
   validateEscrowContractConfig,
   validateIdempotencyKey,
   validateInitializeRequest,
+  validateRefundReasonCode,
   validateRefundRequest,
   validateReleaseRequest,
   type ValidationError,
@@ -249,6 +251,51 @@ export function registerRoutes(): Route[] {
           return;
         }
         sendOperationError(res, "ESCROW_REFUND_FAILED", err);
+      }
+    }),
+
+    // Issue #35 — order-level escrow compensation, called by the orchestrator's
+    // saga compensation steps (which only know orderId, not escrowId). Both
+    // settleOrder/refundOrder are idempotent per orderId via payment_records.status,
+    // so a retried compensation call safely returns the previously recorded outcome
+    // instead of re-invoking the contract.
+    route("POST", "/api/v1/orders/:orderId/release", async (_req, res, params) => {
+      try {
+        const outcome = await settleOrder(params.orderId);
+        const status = outcome.status === "failed" ? 502 : 200;
+        json(res, status, {
+          data: outcome,
+          error: outcome.status === "failed" ? { code: "ORDER_RELEASE_FAILED", message: outcome.reason ?? "Release failed" } : null,
+        });
+      } catch (err) {
+        sendOperationError(res, "ORDER_RELEASE_FAILED", err);
+      }
+    }),
+
+    route("POST", "/api/v1/orders/:orderId/refund", async (req, res, params) => {
+      try {
+        const body = await readJsonBody(req);
+        const reasonValidation = validateRefundReasonCode(body);
+        if (!reasonValidation.ok) {
+          sendValidationError(res, reasonValidation.error);
+          return;
+        }
+
+        const outcome = await refundOrder(params.orderId, reasonValidation.value);
+        const status = outcome.status === "failed" ? 502 : 200;
+        json(res, status, {
+          data: outcome,
+          error: outcome.status === "failed" ? { code: "ORDER_REFUND_FAILED", message: outcome.reason ?? "Refund failed" } : null,
+        });
+      } catch (err) {
+        if (err instanceof Error && err.message === "Invalid JSON body") {
+          sendValidationError(res, {
+            code: "VALIDATION_ERROR",
+            message: "Invalid JSON body",
+          });
+          return;
+        }
+        sendOperationError(res, "ORDER_REFUND_FAILED", err);
       }
     }),
 
