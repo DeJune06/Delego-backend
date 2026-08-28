@@ -1,6 +1,6 @@
 import type { Route } from "@delegolabs/utils";
 import { route } from "@delegolabs/utils";
-import { healthHandler } from "./health.js";
+import { registerHealthRoutes } from "./health.js";
 import { apiV1Handler } from "./api-v1.js";
 import {
   registerHandler,
@@ -24,7 +24,7 @@ import { swaggerHandler } from "../src/swagger.js";
 /** Register all gateway routes */
 export function registerRoutes(): Route[] {
   return [
-    route("GET", "/health", healthHandler),
+    ...registerHealthRoutes(),
     route("GET", "/api/v1/status", apiV1Handler),
     route("POST", "/api/v1/auth/register", registerHandler),
     route("POST", "/api/v1/auth/login", loginHandler),

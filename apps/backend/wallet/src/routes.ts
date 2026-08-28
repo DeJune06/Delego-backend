@@ -4,8 +4,10 @@ import {
   json,
   isValidStellarPublicKey,
   validatePublicKeyMiddleware,
+  createHealthRoutes,
   type Route,
 } from "@delegolabs/utils";
+import { createWalletHealthRegistry } from "./health.js";
 import { accountService } from "../stellar/account.js";
 import { mergeAccount, previewMerge } from "../stellar/recovery.js";
 import { transactionService } from "../transactions/index.js";
@@ -25,6 +27,8 @@ import { registerRecoveryRoutes } from "./recovery/routes.js";
 import { registerBatchingRoutes } from "./batching/routes.js";
 
 const log = createLogger("wallet:routes", process.env.LOG_LEVEL ?? "info");
+
+const walletHealthRegistry = createWalletHealthRegistry();
 
 interface TokenBalance {
   assetCode: string;
@@ -98,6 +102,12 @@ export function registerRoutes(): Route[] {
   const validateAddress = validatePublicKeyMiddleware("address");
 
   return [
+    ...createHealthRoutes({
+      registry: walletHealthRegistry,
+      serviceName: "wallet",
+      version: "0.0.1",
+    }),
+
     // Create new Stellar wallet (Master or Delegate keypair)
     route("POST", "/wallets/create", async (req, res) => {
       try {
