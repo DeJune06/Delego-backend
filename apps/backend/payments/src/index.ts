@@ -23,6 +23,24 @@ export type {
   ReleaseResult,
 } from "./escrowCoordinator/index.js";
 
+// ─── #45 Escrow Auto-Release on Delivery Confirmation ──────────────────────
+
+export { adminOverrideRelease, executeAutoRelease, handleDeliveryConfirmation } from "./autoRelease/service.js";
+export { getAutoReleaseConfig, setAutoReleaseConfig } from "./autoRelease/configStore.js";
+export { verifyWebhookSignature } from "./autoRelease/hmac.js";
+export type {
+  AdminOverrideReleaseParams,
+  AutoReleaseOutcome,
+  ScheduledReleaseAck,
+} from "./autoRelease/service.js";
+export type {
+  AutoReleaseConfig,
+  DeliveryConfirmation,
+  DeliveryProof,
+  ReleaseResult as AutoReleaseResult,
+} from "./autoRelease/types.js";
+export { EscrowDisputedError, EscrowNotReleasableError } from "./autoRelease/types.js";
+
 const SERVICE_NAME = "payments";
 const DEFAULT_PORT = 3014;
 
