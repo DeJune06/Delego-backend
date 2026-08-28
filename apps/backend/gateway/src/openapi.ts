@@ -284,16 +284,56 @@ export const openApiSpec = {
   openapi: "3.0.3",
   info: {
     title: "Delego Gateway API",
-    description:
-      "Delego gateway service — manages authentication, delegation policies, wallets, and admin operations.",
-    version: "0.0.1",
+    description: `Delego gateway service — manages authentication, delegation policies, wallets, and admin operations.
+
+## API Versioning
+
+This API uses URL-based versioning. All endpoints are prefixed with \`/api/v{version}/\`.
+The current stable version is **v1**. Older versions may be deprecated after 6 months.
+
+## Authentication
+
+All authenticated endpoints require a Bearer JWT token obtained from \`/api/v1/auth/login\` or \`/api/v1/auth/register\`.
+
+\`\`\`bash
+curl -H "Authorization: Bearer <token>" https://api.delego.dev/api/v1/wallets
+\`\`\`
+
+## Rate Limiting
+
+- **Anonymous**: 10 requests/minute
+- **Authenticated**: 60 requests/minute
+- **Admin**: 120 requests/minute
+
+Rate limit headers are included in all responses:
+- \`X-RateLimit-Limit\`
+- \`X-RateLimit-Remaining\`
+- \`X-RateLimit-Reset\`
+
+## Getting Started
+
+1. **Register** a user: \`POST /api/v1/auth/register\`
+2. **Login**: \`POST /api/v1/auth/login\`
+3. **Create a delegation**: \`POST /api/v1/delegations\`
+4. **Create a wallet**: \`POST /api/v1/wallets\`
+5. **Send a payment**: \`POST /api/v1/wallets/{walletId}/payments\`
+6. **Check fees**: \`GET /api/v1/fees/estimate\`
+`,
+    version: "1.0.0",
     contact: {
       name: "DelegoLabs",
+      email: "api@delego.dev",
       url: "https://github.com/DelegoLabs/Delego",
+    },
+    license: {
+      name: "MIT",
+      url: "https://opensource.org/licenses/MIT",
     },
   },
   servers: [
     { url: "/", description: "Current server" },
+    { url: "https://api.delego.dev", description: "Production" },
+    { url: "https://api-staging.delego.dev", description: "Staging" },
   ],
   paths: {
     "/health": {
@@ -696,6 +736,206 @@ export const openApiSpec = {
         },
       },
     },
+    "/api/v1/wallets/{walletId}/payments": {
+      post: {
+        tags: ["Wallets"],
+        summary: "Send payment",
+        description: "Sends a Stellar payment from the specified wallet.",
+        operationId: "sendPayment",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "walletId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  destination: { type: "string", description: "Stellar public key (G...)" },
+                  amount: { type: "string", description: "Amount in stroops" },
+                  assetCode: { type: "string", default: "XLM", description: "Asset code" },
+                  memo: { type: "string", description: "Optional memo" },
+                  feePriority: { type: "string", enum: ["economic", "normal", "fast"], default: "normal" },
+                },
+                required: ["destination", "amount"],
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Payment submitted",
+            content: {
+              "application/json": {
+                schema: ApiResponse({
+                  type: "object",
+                  properties: {
+                    transactionHash: { type: "string" },
+                    feeStroops: { type: "string" },
+                    status: { type: "string", enum: ["submitted", "pending", "failed"] },
+                  },
+                }),
+              },
+            },
+          },
+          "400": { description: "Validation error", content: { "application/json": { schema: ApiResponse(null) } } },
+          "401": { description: "Not authenticated", content: { "application/json": { schema: ApiResponse(null) } } },
+          "404": { description: "Wallet not found", content: { "application/json": { schema: ApiResponse(null) } } },
+        },
+      },
+    },
+    "/api/v1/wallets/{walletId}/signing-keys": {
+      post: {
+        tags: ["Wallets"],
+        summary: "Derive HD key",
+        description: "Derives a new signing key using BIP-32/44 HD derivation for the wallet.",
+        operationId: "deriveHDKey",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "walletId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  path: { type: "string", description: "BIP-44 derivation path (e.g. m/44'/148'/0'/0/0)" },
+                  accountIndex: { type: "integer", default: 0 },
+                  addressIndex: { type: "integer", default: 0 },
+                },
+                required: ["path"],
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Key derived",
+            content: {
+              "application/json": {
+                schema: ApiResponse({
+                  type: "object",
+                  properties: {
+                    path: { type: "string" },
+                    publicKey: { type: "string" },
+                    createdAt: { type: "string", format: "date-time" },
+                  },
+                }),
+              },
+            },
+          },
+          "400": { description: "Validation error", content: { "application/json": { schema: ApiResponse(null) } } },
+          "401": { description: "Not authenticated", content: { "application/json": { schema: ApiResponse(null) } } },
+        },
+      },
+      get: {
+        tags: ["Wallets"],
+        summary: "List signing keys",
+        description: "Lists all derived signing keys for the wallet.",
+        operationId: "listSigningKeys",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "walletId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          "200": {
+            description: "List of signing keys",
+            content: {
+              "application/json": {
+                schema: ApiResponse({
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      path: { type: "string" },
+                      publicKey: { type: "string" },
+                      createdAt: { type: "string", format: "date-time" },
+                    },
+                  },
+                }),
+              },
+            },
+          },
+          "401": { description: "Not authenticated", content: { "application/json": { schema: ApiResponse(null) } } },
+        },
+      },
+    },
+    "/api/v1/fees/estimate": {
+      get: {
+        tags: ["Fees"],
+        summary: "Estimate transaction fee",
+        description: `Returns a dynamic fee estimate based on current Stellar network conditions.
+
+- **economic** (p50): Lowest fee, may take longer to confirm
+- **normal** (p95): Recommended for most transactions
+- **fast** (p99): Highest priority, fastest confirmation`,
+        operationId: "estimateFee",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "priority",
+            in: "query",
+            schema: { type: "string", enum: ["economic", "normal", "fast"], default: "normal" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Fee estimate",
+            content: {
+              "application/json": {
+                schema: ApiResponse({
+                  type: "object",
+                  properties: {
+                    feeStroops: { type: "string" },
+                    priority: { type: "string", enum: ["economic", "normal", "fast"] },
+                    source: { type: "string", enum: ["horizon", "fallback"] },
+                    baseFeeStroops: { type: "number" },
+                    fetchedAt: { type: "string", format: "date-time" },
+                  },
+                }),
+              },
+            },
+          },
+          "401": { description: "Not authenticated", content: { "application/json": { schema: ApiResponse(null) } } },
+        },
+      },
+    },
+    "/api/v1/wallets/{walletId}/hsm/health": {
+      get: {
+        tags: ["Wallets"],
+        summary: "HSM health status",
+        description: "Returns the health status of the HSM integration for the wallet's key signer.",
+        operationId: "getHSMHealth",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "walletId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          "200": {
+            description: "HSM health status",
+            content: {
+              "application/json": {
+                schema: ApiResponse({
+                  type: "object",
+                  properties: {
+                    status: { type: "string", enum: ["healthy", "degraded", "unavailable"] },
+                    latencyMs: { type: "number" },
+                    lastCheck: { type: "string", format: "date-time" },
+                    consecutiveFailures: { type: "number" },
+                    uptime: { type: "number", description: "Uptime percentage" },
+                  },
+                }),
+              },
+            },
+          },
+          "401": { description: "Not authenticated", content: { "application/json": { schema: ApiResponse(null) } } },
+        },
+      },
+    },
     "/api/v1/admin/rate-limit/metrics": {
       get: {
         tags: ["Admin"],
@@ -737,7 +977,8 @@ export const openApiSpec = {
     { name: "System", description: "Health and status endpoints" },
     { name: "Auth", description: "Authentication and token management" },
     { name: "Delegations", description: "Delegation CRUD and policy management" },
-    { name: "Wallets", description: "Wallet information" },
+    { name: "Wallets", description: "Wallet operations, payments, HD key derivation, and HSM health" },
+    { name: "Fees", description: "Dynamic transaction fee estimation" },
     { name: "Admin", description: "Administrative endpoints (admin role required)" },
   ],
 };

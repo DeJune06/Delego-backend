@@ -21,6 +21,7 @@ import {
   type SubmissionFailure,
 } from "./submissionFailure.js";
 import { SorobanTransactionSimulator, readSorobanRpcConfig } from "../sorobanSimulator.js";
+import { getTransactionFee } from "../dynamicFee.js";
 
 export { classifySubmissionFailure, type SubmissionFailure } from "./submissionFailure.js";
 
@@ -432,7 +433,7 @@ async function executeTxJob(
 
     // 4. Build draft transaction using the thread-safe sequence number
     let tx = new TransactionBuilder(account, {
-      fee: "100",
+      fee: await getTransactionFee(horizonUrl),
       networkPassphrase,
     })
       .addOperation(
