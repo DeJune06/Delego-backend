@@ -375,6 +375,9 @@ importers:
         specifier: ^16.0.0
         version: 16.2.0
     devDependencies:
+      ioredis:
+        specifier: ^5.11.1
+        version: 5.11.1
       pg:
         specifier: ^8.21.0
         version: 8.23.0
