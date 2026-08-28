@@ -9,6 +9,9 @@ import {
   logoutHandler,
   oauthCallbackHandler,
   oauthAuthorizeHandler,
+  introspectHandler,
+  revokeHandler,
+  jwksHandler,
 } from "./auth.js";
 import {
   createDelegationHandler,
@@ -30,6 +33,11 @@ export function registerRoutes(): Route[] {
     route("POST", "/api/v1/auth/login", loginHandler),
     route("POST", "/api/v1/auth/refresh", refreshHandler),
     route("POST", "/api/v1/auth/logout", logoutHandler),
+    // JWT management (Issue #77)
+    route("POST", "/api/v1/auth/introspect", introspectHandler),
+    route("POST", "/api/v1/auth/revoke", revokeHandler),
+    route("GET", "/api/v1/auth/.well-known/jwks.json", jwksHandler),
+    route("GET", "/.well-known/jwks.json", jwksHandler),
     route("GET", "/api/v1/auth/oauth/authorize", oauthAuthorizeHandler),
     route("POST", "/api/v1/auth/oauth/callback", oauthCallbackHandler),
     route("POST", "/api/v1/delegations", createDelegationHandler),
