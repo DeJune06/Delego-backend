@@ -183,10 +183,39 @@ function handleConnection(ws: WebSocket, req: IncomingMessage) {
         sendMessage(ws, { type: "pong" });
         resetHeartbeat();
       } else if (message.type === "subscribe") {
-        const topics = message.topics || [];
-        connection.subscribedTopics = [
-          ...new Set([...connection.subscribedTopics, ...topics]),
-        ];
+        const topics: string[] = message.topics || [];
+        const ownTopic = `user:${decoded.userId}`;
+
+        // Only allow subscribing to own user topic
+        const allowed: string[] = [];
+        const rejected: string[] = [];
+        for (const topic of topics) {
+          if (topic === ownTopic) {
+            allowed.push(topic);
+          } else {
+            rejected.push(topic);
+          }
+        }
+
+        if (rejected.length > 0) {
+          log.warn("Rejected unauthorized topic subscription", {
+            connectionId,
+            userId: decoded.userId,
+            rejected,
+          });
+          sendMessage(ws, {
+            type: "error",
+            message: "Cannot subscribe to other users' topics",
+            rejected,
+          });
+        }
+
+        if (allowed.length > 0) {
+          connection.subscribedTopics = [
+            ...new Set([...connection.subscribedTopics, ...allowed]),
+          ];
+        }
+
         sendMessage(ws, {
           type: "subscribed",
           topics: connection.subscribedTopics,
