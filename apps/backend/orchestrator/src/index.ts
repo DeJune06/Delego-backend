@@ -2,7 +2,15 @@
  * @delegolabs/orchestrator — Workflow coordination
  * #64 Purchase Recovery Engine — reconcileWorkflows compares DB state with on-chain escrow.
  */
-import { createLogger, json, route, startHttpServer, createHealthRoutes } from "@delegolabs/utils";
+import {
+  createLogger,
+  json,
+  route,
+  startHttpServer,
+  createHealthRoutes,
+  corsMiddleware,
+  securityHeadersMiddleware,
+} from "@delegolabs/utils";
 import { Pool } from "pg";
 import { Redis } from "ioredis";
 import { createOrchestratorHealthRegistry } from "./health.js";
@@ -395,6 +403,7 @@ async function main(): Promise<void> {
   startHttpServer({
     port,
     serviceName: SERVICE_NAME,
+    middleware: [corsMiddleware(), securityHeadersMiddleware()],
     routes: [
       ...createHealthRoutes({
         registry: orchestratorHealthRegistry,
@@ -500,6 +509,67 @@ async function main(): Promise<void> {
             error: { code: status === 404 ? "NOT_FOUND" : "SAGA_RESUME_FAILED", message },
           });
         }
+      }),
+
+      // Issue #146 — Workflow state migration endpoints
+      route("POST", "/migrations", async (req, res) => {
+        let body: Record<string, unknown>;
+        try {
+          body = await readJsonBody(req);
+        } catch {
+          json(res, 400, { data: null, error: { code: "VALIDATION_ERROR", message: "Invalid JSON body" } });
+          return;
+        }
+        const { plan, instances, dryRun } = body as {
+          plan?: { workflowType: string; fromVersion: string; toVersion: string; stateMappings: unknown[]; contextTransforms: unknown[]; safetyChecks: string[]; estimatedDurationMs: number };
+          instances?: Array<{ instanceId: string; state: string; context: Record<string, unknown> }>;
+          dryRun?: boolean;
+        };
+        if (!plan || !instances) {
+          json(res, 400, { data: null, error: { code: "VALIDATION_ERROR", message: "plan and instances are required" } });
+          return;
+        }
+        try {
+          const { createMigration } = await import("./migration/index.js");
+          const migration = await createMigration(plan as any, instances, dryRun ?? false);
+          json(res, 201, { data: migration, error: null });
+        } catch (err) {
+          json(res, 500, { data: null, error: { code: "MIGRATION_FAILED", message: (err as Error).message } });
+        }
+      }),
+
+      route("GET", "/migrations/:migrationId", async (_req, res, params) => {
+        const { getMigration, getMigrationProgress } = await import("./migration/index.js");
+        const migration = getMigration(params.migrationId);
+        if (!migration) {
+          json(res, 404, { data: null, error: { code: "NOT_FOUND", message: "Migration not found" } });
+          return;
+        }
+        const progress = getMigrationProgress(params.migrationId);
+        json(res, 200, { data: { ...migration, progress }, error: null });
+      }),
+
+      route("GET", "/migrations", async (_req, res) => {
+        const { listMigrations } = await import("./migration/index.js");
+        const migrations = listMigrations();
+        json(res, 200, { data: migrations, error: null });
+      }),
+
+      // Issue #145 — Timeout escalation endpoints
+      route("GET", "/timeout/analytics/:workflowType", async (_req, res, params) => {
+        const { getWorkflowTimeoutHandler } = await import("./timeout/escalation.js");
+        const handler = getWorkflowTimeoutHandler();
+        const analytics = handler.getAnalytics(params.workflowType);
+        json(res, 200, { data: analytics, error: null });
+      }),
+
+      route("GET", "/timeout/events", async (req, res) => {
+        const url = new URL(req.url ?? "/", `http://localhost`);
+        const workflowType = url.searchParams.get("workflowType") ?? undefined;
+        const { getWorkflowTimeoutHandler } = await import("./timeout/escalation.js");
+        const handler = getWorkflowTimeoutHandler();
+        const events = handler.getTimeoutEvents(workflowType);
+        json(res, 200, { data: events, error: null });
       }),
     ],
   });

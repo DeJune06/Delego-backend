@@ -1,7 +1,7 @@
 /**
  * @delegolabs/notifications — Entry point
  */
-import { createLogger, startHttpServer, route, json } from "@delegolabs/utils";
+import { createLogger, startHttpServer, route, json, corsMiddleware, securityHeadersMiddleware } from "@delegolabs/utils";
 import { broadcastNotificationToUser, getWebSocketMetrics, initWebSocketServer } from "./websocket.js";
 import { sequelize } from "./db.js";
 import {
@@ -118,6 +118,7 @@ function readBody(req: IncomingMessage): Promise<unknown> {
 const server: Server = startHttpServer({
   port,
   serviceName: SERVICE_NAME,
+  middleware: [corsMiddleware(), securityHeadersMiddleware()],
   routes: [
     route("GET", "/vapid-public-key", (_req: IncomingMessage, res: ServerResponse) => {
       const key = getVapidPublicKey();

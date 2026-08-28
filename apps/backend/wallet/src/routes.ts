@@ -25,6 +25,9 @@ import { createLogger } from "@delegolabs/utils";
 import { registerMultiSigRoutes } from "./multisig/routes.js";
 import { registerRecoveryRoutes } from "./recovery/routes.js";
 import { registerBatchingRoutes } from "./batching/routes.js";
+import { registerSequenceAdminRoutes } from "./batching/sequenceAdminRoutes.js";
+import { registerSimulationCacheAdminRoutes } from "./batching/simulationCacheAdminRoutes.js";
+import { registerDLQAdminRoutes } from "./batching/dlqAdminRoutes.js";
 
 const log = createLogger("wallet:routes", process.env.LOG_LEVEL ?? "info");
 
@@ -742,5 +745,14 @@ export function registerRoutes(): Route[] {
 
     // --- Issue #42: Transaction batching routes ---
     ...registerBatchingRoutes(),
+
+    // --- Issue #140: Sequence reservation monitoring & admin routes ---
+    ...registerSequenceAdminRoutes(),
+
+    // --- Issue #141: Simulation cache admin routes ---
+    ...registerSimulationCacheAdminRoutes(),
+
+    // --- Issue #143: Transaction DLQ admin routes ---
+    ...registerDLQAdminRoutes(),
   ];
 }
