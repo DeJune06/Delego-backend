@@ -2,7 +2,15 @@
  * @delegolabs/orchestrator — Workflow coordination
  * #64 Purchase Recovery Engine — reconcileWorkflows compares DB state with on-chain escrow.
  */
-import { createLogger, json, route, startHttpServer, createHealthRoutes } from "@delegolabs/utils";
+import {
+  createLogger,
+  json,
+  route,
+  startHttpServer,
+  createHealthRoutes,
+  corsMiddleware,
+  securityHeadersMiddleware,
+} from "@delegolabs/utils";
 import { Pool } from "pg";
 import { createOrchestratorHealthRegistry } from "./health.js";
 import {
@@ -374,6 +382,7 @@ async function main(): Promise<void> {
   startHttpServer({
     port,
     serviceName: SERVICE_NAME,
+    middleware: [corsMiddleware(), securityHeadersMiddleware()],
     routes: [
       ...createHealthRoutes({
         registry: orchestratorHealthRegistry,

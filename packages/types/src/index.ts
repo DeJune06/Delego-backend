@@ -20,3 +20,6 @@ export * from "./clusterConfig.js";
 export * from "./clusterConfigValidation.js";
 export * from "./blueGreenDeployment.js";
 export * from "./blueGreenSwitcher.js";
+export * from "./grpc.js";
+export * from "./cdn.js";
+export * from "./cdnValidation.js";
