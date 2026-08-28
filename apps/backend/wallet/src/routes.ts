@@ -5,6 +5,8 @@ import {
   isValidStellarPublicKey,
   validatePublicKeyMiddleware,
   createHealthRoutes,
+  readBodyWithLimit,
+  PayloadTooLargeError,
   type Route,
 } from "@delegolabs/utils";
 import { createWalletHealthRegistry } from "./health.js";
@@ -81,24 +83,33 @@ function xlmToStroops(xlmStr: string): string {
   return trimmed === "" ? "0" : trimmed;
 }
 
-// Helper to parse JSON body from incoming Node.js request
+// Helper to parse JSON body from incoming Node.js request.
+// Body is capped at 1MB (see readBodyWithLimit) — an oversized body rejects
+// with PayloadTooLargeError, which callers handle by responding 413.
 async function readJsonBody<T>(req: IncomingMessage): Promise<T> {
-  return new Promise((resolve, reject) => {
-    let body = "";
-    req.on("data", (chunk) => {
-      body += chunk;
+  const body = await readBodyWithLimit(req);
+  try {
+    return body ? (JSON.parse(body) as T) : ({} as T);
+  } catch {
+    throw new Error("Invalid JSON body");
+  }
+}
+
+// Sends the standard 413 Payload Too Large response when readJsonBody
+// rejects with PayloadTooLargeError; returns false for any other error so
+// callers can fall through to their own error handling.
+function respondIfPayloadTooLarge(res: Parameters<typeof json>[0], err: unknown): boolean {
+  if (err instanceof PayloadTooLargeError) {
+    json(res, 413, {
+      data: null,
+      error: {
+        code: "PAYLOAD_TOO_LARGE",
+        message: err.message,
+      },
     });
-    req.on("end", () => {
-      try {
-        resolve(body ? (JSON.parse(body) as T) : ({} as T));
-      } catch (err) {
-        reject(new Error("Invalid JSON body"));
-      }
-    });
-    req.on("error", (err) => {
-      reject(err);
-    });
-  });
+    return true;
+  }
+  return false;
 }
 
 export function registerRoutes(): Route[] {
@@ -120,6 +131,7 @@ export function registerRoutes(): Route[] {
         const account = await accountService.createAccount(network);
         json(res, 201, { data: account, error: null });
       } catch (err: any) {
+        if (respondIfPayloadTooLarge(res, err)) return;
         json(res, 400, {
           data: null,
           error: { code: "CREATE_WALLET_FAILED", message: err.message },
@@ -203,6 +215,7 @@ export function registerRoutes(): Route[] {
 
         json(res, 200, { data: simResult, error: null });
       } catch (err: any) {
+        if (respondIfPayloadTooLarge(res, err)) return;
         json(res, 400, {
           data: null,
           error: { code: "SIMULATION_FAILED", message: err.message },
@@ -243,6 +256,7 @@ export function registerRoutes(): Route[] {
 
         json(res, 200, { data: txResult, error: null });
       } catch (err: any) {
+        if (respondIfPayloadTooLarge(res, err)) return;
         json(res, 400, {
           data: null,
           error: { code: "SUBMISSION_FAILED", message: err.message },
@@ -298,6 +312,7 @@ export function registerRoutes(): Route[] {
 
         json(res, 200, { data: result, error: null });
       } catch (err: any) {
+        if (respondIfPayloadTooLarge(res, err)) return;
         log.error("POST merge account error", { error: err.message });
         json(res, 400, {
           data: null,
@@ -342,6 +357,7 @@ export function registerRoutes(): Route[] {
 
         json(res, 200, { data: preview, error: null });
       } catch (err: any) {
+        if (respondIfPayloadTooLarge(res, err)) return;
         log.error("POST merge preview error", { error: err.message });
         json(res, 400, {
           data: null,

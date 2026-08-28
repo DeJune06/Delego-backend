@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { route, json, createHealthRoutes, type Route } from "@delegolabs/utils";
+import { route, json, createHealthRoutes, readBodyWithLimit, PayloadTooLargeError, type Route } from "@delegolabs/utils";
 import { escrowService } from "../escrow/index.js";
 import { getPaymentsHealth } from "../escrow/health.js";
 import { createPaymentsHealthRegistry } from "./health.js";
@@ -25,23 +25,15 @@ import {
 
 const paymentsHealthRegistry = createPaymentsHealthRegistry();
 
+// Body is capped at 1MB (see readBodyWithLimit) — an oversized body rejects
+// with PayloadTooLargeError, which callers handle by responding 413.
 async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {
-  return new Promise((resolve, reject) => {
-    let body = "";
-    req.on("data", (chunk) => {
-      body += chunk;
-    });
-    req.on("end", () => {
-      try {
-        resolve(body ? (JSON.parse(body) as Record<string, unknown>) : {});
-      } catch {
-        reject(new Error("Invalid JSON body"));
-      }
-    });
-    req.on("error", (err) => {
-      reject(err);
-    });
-  });
+  const body = await readBodyWithLimit(req);
+  try {
+    return body ? (JSON.parse(body) as Record<string, unknown>) : {};
+  } catch {
+    throw new Error("Invalid JSON body");
+  }
 }
 
 async function readRawBody(req: IncomingMessage): Promise<string> {
@@ -61,6 +53,13 @@ function validationStatusCode(code: string): number {
 
 function sendValidationError(res: ServerResponse, error: ValidationError): void {
   json(res, validationStatusCode(error.code), { data: null, error });
+}
+
+function sendPayloadTooLargeError(res: ServerResponse, err: PayloadTooLargeError): void {
+  json(res, 413, {
+    data: null,
+    error: { code: "PAYLOAD_TOO_LARGE", message: err.message },
+  });
 }
 
 function sendOperationError(res: ServerResponse, code: string, err: unknown): void {
@@ -117,6 +116,10 @@ export function registerRoutes(): Route[] {
         const result = await escrowService.initialize(validated.value);
         json(res, 200, { data: result, error: null });
       } catch (err) {
+        if (err instanceof PayloadTooLargeError) {
+          sendPayloadTooLargeError(res, err);
+          return;
+        }
         if (err instanceof Error && err.message === "Invalid JSON body") {
           sendValidationError(res, {
             code: "VALIDATION_ERROR",
@@ -163,6 +166,10 @@ export function registerRoutes(): Route[] {
         const result = await escrowService.deposit(validated.value);
         json(res, 200, { data: result, error: null });
       } catch (err) {
+        if (err instanceof PayloadTooLargeError) {
+          sendPayloadTooLargeError(res, err);
+          return;
+        }
         if (err instanceof Error && err.message === "Invalid JSON body") {
           sendValidationError(res, {
             code: "VALIDATION_ERROR",
@@ -208,6 +215,10 @@ export function registerRoutes(): Route[] {
         const result = await escrowService.release(validated.value);
         json(res, 200, { data: result, error: null });
       } catch (err) {
+        if (err instanceof PayloadTooLargeError) {
+          sendPayloadTooLargeError(res, err);
+          return;
+        }
         if (err instanceof Error && err.message === "Invalid JSON body") {
           sendValidationError(res, {
             code: "VALIDATION_ERROR",
@@ -244,6 +255,10 @@ export function registerRoutes(): Route[] {
         });
 
       } catch (err) {
+        if (err instanceof PayloadTooLargeError) {
+          sendPayloadTooLargeError(res, err);
+          return;
+        }
         if (err instanceof Error && err.message === "Invalid JSON body") {
           sendValidationError(res, {
             code: "VALIDATION_ERROR",
@@ -337,6 +352,10 @@ export function registerRoutes(): Route[] {
 
         json(res, result.status === "failed" ? 502 : 200, { data: result, error: null });
       } catch (err) {
+        if (err instanceof PayloadTooLargeError) {
+          sendPayloadTooLargeError(res, err);
+          return;
+        }
         if (err instanceof Error && err.message === "Invalid JSON body") {
           sendValidationError(res, {
             code: "VALIDATION_ERROR",

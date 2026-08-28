@@ -2,6 +2,7 @@
  * @delegolabs/notifications — Entry point
  */
 import { createLogger, startHttpServer, route, json, corsMiddleware, securityHeadersMiddleware } from "@delegolabs/utils";
+import { readBody } from "./readBody.js";
 import { broadcastNotificationToUser, getWebSocketMetrics, initWebSocketServer } from "./websocket.js";
 import { sequelize } from "./db.js";
 import {
@@ -107,21 +108,6 @@ if (rpcUrl && escrowContractId) {
   log.info(
     "Escrow event listener disabled (set STELLAR_RPC_URL and ESCROW_CONTRACT_ID to enable)"
   );
-}
-
-function readBody(req: IncomingMessage): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    let data = "";
-    req.on("data", (chunk) => (data += chunk));
-    req.on("end", () => {
-      try {
-        resolve(JSON.parse(data));
-      } catch {
-        reject(new Error("Invalid JSON body"));
-      }
-    });
-    req.on("error", reject);
-  });
 }
 
 const server: Server = startHttpServer({
