@@ -49,3 +49,10 @@ export * from "./pentest.js";
 export * from "./coverageGate.js";
 export * from "./integrationFixtures.js";
 export * from "./e2eRunner.js";
+export {
+  corsMiddleware,
+  securityHeadersMiddleware,
+  type CorsOptions,
+  type CorsRejectionLog,
+  type SecurityHeadersOptions,
+} from "./security.js";
